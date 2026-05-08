@@ -39,14 +39,15 @@ func (h *DriverHandler) CreateDriver(c *gin.Context) {
 }
 
 func (h *DriverHandler) GetDriver(c *gin.Context) {
-	driverId, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No Vehicle Id Provided."})
 		return
 	}
 
-	driver, err := h.driverService.GetDriver(c.Request.Context(), driverId)
+	driver, err := h.driverService.GetDriver(c.Request.Context(), int64(id))
 	if err != nil {
 		c.JSON(apperr.HTTPStatus(err), gin.H{"error": apperr.Message(err)})
 		return

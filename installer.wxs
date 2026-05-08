@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-
   <Product
     Id="*"
     Name="Waybill"
@@ -15,23 +14,16 @@
       InstallScope="perMachine"
       Description="Waybill Desktop Application" />
 
-    <!-- 👇 THIS is the missing part – forces embedding -->
     <Media Id="1" Cabinet="waybill.cab" EmbedCab="yes" />
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder">
         <Directory Id="INSTALLFOLDER" Name="Waybill">
           <Component Id="MainExecutable" Guid="*">
-            <File Id="waybillExe"
-                  Name="waybill.exe"
-                  Source="build/bin/waybill.exe"
-                  KeyPath="yes" />
+            <File Id="waybillExe" Name="waybill.exe" Source="build/bin/waybill.exe" KeyPath="yes" />
           </Component>
           <Component Id="AppIconFile" Guid="*">
-            <File Id="icon.png"
-                  Name="icon.png"
-                  Source="icon.ico"
-                  KeyPath="yes" />
+            <File Id="icon.png" Name="icon.png" Source="icon.ico" KeyPath="yes" />
           </Component>
         </Directory>
       </Directory>
@@ -42,24 +34,25 @@
       <Directory Id="DesktopFolder" Name="Desktop" />
     </Directory>
 
+    <!-- Start Menu Shortcut with HKLM registry keypath -->
     <DirectoryRef Id="ApplicationProgramsFolder">
       <Component Id="StartMenuShortcut" Guid="*">
+        <RegistryValue Root="HKLM" Key="Software\Softdash\Waybill" Name="installed" Type="integer" Value="1" KeyPath="yes" />
         <Shortcut Id="startMenuWaybill" Name="Waybill" Description="Launch Waybill"
                   Target="[INSTALLFOLDER]waybill.exe" WorkingDirectory="INSTALLFOLDER"
                   Icon="icon.png" />
         <RemoveFolder Id="RemoveAppFolder" On="uninstall" />
-        <RegistryValue Root="HKMU" Key="Software\Softdash\Waybill" Name="installed"
-                       Type="integer" Value="1" KeyPath="yes" />
       </Component>
     </DirectoryRef>
 
+    <!-- Desktop Shortcut with HKLM registry keypath -->
     <DirectoryRef Id="DesktopFolder">
       <Component Id="DesktopShortcut" Guid="*">
+        <RegistryValue Root="HKLM" Key="Software\Softdash\Waybill\Desktop" Name="installed" Type="integer" Value="1" KeyPath="yes" />
         <Shortcut Id="desktopWaybill" Name="Waybill" Description="Launch Waybill"
                   Target="[INSTALLFOLDER]waybill.exe" WorkingDirectory="INSTALLFOLDER"
                   Icon="icon.png" />
-        <RegistryValue Root="HKMU" Key="Software\Softdash\Waybill\Desktop" Name="installed"
-                       Type="integer" Value="1" KeyPath="yes" />
+        <RemoveFolder Id="RemoveDesktopFolder" On="uninstall" />
       </Component>
     </DirectoryRef>
 

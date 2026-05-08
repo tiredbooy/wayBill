@@ -11,7 +11,7 @@ func setupRoutes(r *gin.Engine, handlers *Handlers) {
 	api := r.Group("/api")
 	v1 := api.Group("/v1")
 
-	v1.GET("/token", handlerPkg.GetAuthToken)
+	v1.GET("/auth/token", handlerPkg.GetAuthToken)
 	protected := v1.Group("")
 	protected.Use(middlewares.LocalTokenRequired())
 

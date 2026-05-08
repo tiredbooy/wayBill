@@ -1,3 +1,4 @@
+import { getToken } from "@/_libs/auth/auth";
 import type { PaginatedResponse } from "@/_libs/types/paginated-types";
 import type {
   CreateVehicleReq,
@@ -10,11 +11,13 @@ import { withQuery } from "@/_libs/utils/query-helpers";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export async function createVehicle(data: CreateVehicleReq) {
+  const token = await getToken();
   const res = await fetch(`${API_URL}/api/v1/vehicles`, {
     method: "POST",
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      "X-Waybill-Token": token,
     },
     body: JSON.stringify(data),
   });
@@ -39,28 +42,38 @@ export async function getVehicles(
     orderBy: params.orderBy,
   });
 
+  const token = await getToken();
   const res = await fetch(url, {
     method: "GET",
     credentials: "include",
+    headers: {
+      "X-Waybill-Token": token,
+    },
   });
 
   return await res.json();
 }
 
 export async function getVehicle(vehicleID: number): Promise<VehicleResponse> {
+  const token = await getToken();
   const res = await fetch(`${API_URL}/api/v1/vehicles/${vehicleID}`, {
     method: "GET",
     credentials: "include",
+    headers: {
+      "X-Waybill-Token": token,
+    },
   });
 
   return await res.json();
 }
 
 export async function deleteVehicle(vehicleID: number) {
+  const token = await getToken();
   const res = await fetch(`${API_URL}/api/v1/vehicles/${vehicleID}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
+      "X-Waybill-Token": token,
     },
     credentials: "include",
   });
@@ -71,15 +84,19 @@ export async function deleteVehicle(vehicleID: number) {
   }
 
   const data = await res.json();
-
   return data;
 }
 
-export async function updateVehicle(reqData: UpdateVehicleReq, vehicleID: number) {
-  const res = await fetch(`${API_URL}/api/v1/drivers/${vehicleID}`, {
+export async function updateVehicle(
+  reqData: UpdateVehicleReq,
+  vehicleID: number,
+) {
+  const token = await getToken();
+  const res = await fetch(`${API_URL}/api/v1/vehicles/${vehicleID}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
+      "X-Waybill-Token": token,
     },
     body: JSON.stringify(reqData),
     credentials: "include",
@@ -91,6 +108,5 @@ export async function updateVehicle(reqData: UpdateVehicleReq, vehicleID: number
   }
 
   const data = await res.json();
-
   return data;
 }

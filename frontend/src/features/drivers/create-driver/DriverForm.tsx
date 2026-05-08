@@ -29,7 +29,7 @@ const driverSchema = z.object({
   first_name: z.string().min(2, "نام الزامی است"),
   last_name: z.string().min(2, "نام خانوادگی الزامی است"),
   phone: z.string().min(10, "شماره معتبر نیست"),
-  vehicle_id: z.number(),
+  vehicle_id: z.string().optional(),
   code: z.string().optional(),
   address: z.string().optional(),
   national_code: z.string(),
@@ -48,7 +48,7 @@ export function DriverForm({ mode = "create", driver }: Props) {
       first_name: driver?.first_name ?? "",
       last_name: driver?.last_name ?? "",
       phone: driver?.phone ?? "",
-      vehicle_id: driver?.vehicle_id ?? 0,
+      vehicle_id: driver?.vehicle_id ? String(driver.vehicle_id) : "",
       code: driver?.code ?? "",
       address: driver?.address ?? "",
       national_code: driver?.national_code ?? "",
@@ -83,16 +83,26 @@ export function DriverForm({ mode = "create", driver }: Props) {
     }) ?? [];
 
   const onSubmit = async (data: DriverFormValues) => {
-    console.log("MODE: ", mode);
-    if (mode === "create") {
-      createDriver.mutateAsync(data as CreateDriverReq);
-      reset();
-    } else if (mode === "edit") {
-      const req = {
-        data: data as UpdateDriverReq,
-        driverID: Number(driver?.id),
-      };
-      updateDriver.mutateAsync(req);
+    const vehicleIdStr = data.vehicle_id?.trim();
+    const numericVehicleId = vehicleIdStr ? Number(vehicleIdStr) : undefined;
+
+    const payload = {
+      ...data,
+      vehicle_id: numericVehicleId,
+    };
+
+    try {
+      if (mode === "create") {
+        await createDriver.mutateAsync(payload as CreateDriverReq);
+        reset();
+      } else if (mode === "edit") {
+        await updateDriver.mutateAsync({
+          data: payload as UpdateDriverReq,
+          driverID: Number(driver?.id),
+        });
+      }
+    } catch (error: any) {
+      console.error(error);
     }
   };
 
@@ -182,7 +192,7 @@ export function DriverForm({ mode = "create", driver }: Props) {
             <Button
               type="submit"
               className="w-full"
-              disabled={createDriver.isPending || isLoading || isSubmitting}
+              disabled={createDriver.isPending || isSubmitting}
             >
               {createDriver.isPending ||
               updateDriver.isPending ||

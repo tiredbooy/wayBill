@@ -64,7 +64,7 @@ type CreateDriverReq struct {
 	FirstName     string                `json:"first_name"`
 	LastName      string                `json:"last_name"`
 	Phone         *string `json:"phone"`
-	VehicleID     int64                 `json:"vehicle_id"`
+	VehicleID     *int64                 `json:"vehicle_id"`
 	Code          string                `json:"code"`
 	Address       *string               `json:"address"`
 	NationalCode  *string               `json:"national_code"`

@@ -151,13 +151,16 @@ func (r *driverRepository) GetDriverByID(ctx context.Context, driverId int64) (m
 	var res models.DriverDetails
 
 	query := `
-		SELECT
-		driver.id, first_name, last_name, phone, vehicle_id, code, address, national_code, email, license_number,
-		license_expiry, hire_date, birth_date, driver.status, driver.updated_at, driver.created_at, v.model AS vehicle_model, v.plate AS vehicle_plate
-		FROM driver
-		INNER JOIN vehicle v ON v.id = vehicle_id
-		WHERE driver.id = ?
-	`
+    SELECT
+        driver.id, first_name, last_name, phone, vehicle_id, code, address, national_code, email, license_number,
+        license_expiry, hire_date, birth_date, driver.status, driver.updated_at, driver.created_at,
+        v.model AS vehicle_model, v.plate AS vehicle_plate
+    FROM driver
+    LEFT JOIN vehicle v ON v.id = driver.vehicle_id   -- <-- changed to LEFT JOIN
+    WHERE driver.id = ?
+`
+
+	log.Printf("DEBUG: executing SELECT * FROM driver WHERE id = %d", driverId)
 
 	err := r.db.QueryRowContext(ctx, query, driverId).Scan(
 		&res.ID,

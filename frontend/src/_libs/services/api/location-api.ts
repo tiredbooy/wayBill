@@ -1,3 +1,4 @@
+import { getToken } from "@/_libs/auth/auth";
 import type {
   CreateLocationReq,
   LocationDetail,
@@ -18,21 +19,35 @@ export async function getLocations(
     province: params.province,
     is_terminal: params.is_terminal,
   });
-  const res = await fetch(url, { credentials: "include" });
+  const token = await getToken();
+  const res = await fetch(url, {
+    credentials: "include",
+    headers: {
+      "X-Waybill-Token": token,
+    },
+  });
   return await res.json();
 }
 
 export async function getLocation(locationId: number): Promise<LocationDetail> {
+  const token = await getToken();
   const res = await fetch(`${API_URL}/api/v1/locations/${locationId}`, {
     credentials: "include",
+    headers: {
+      "X-Waybill-Token": token,
+    },
   });
   return await res.json();
 }
 
 export async function createLocation(reqData: CreateLocationReq) {
+  const token = await getToken();
   const res = await fetch(`${API_URL}/api/v1/locations`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Waybill-Token": token,
+    },
     body: JSON.stringify(reqData),
     credentials: "include",
   });
@@ -47,9 +62,13 @@ export async function updateLocation(
   reqData: UpdateLocationReq,
   locationId: number,
 ) {
+  const token = await getToken();
   const res = await fetch(`${API_URL}/api/v1/locations/${locationId}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "X-Waybill-Token": token,
+    },
     body: JSON.stringify(reqData),
     credentials: "include",
   });
@@ -61,9 +80,13 @@ export async function updateLocation(
 }
 
 export async function deleteLocation(locationId: number) {
+  const token = await getToken();
   const res = await fetch(`${API_URL}/api/v1/locations/${locationId}`, {
     method: "DELETE",
     credentials: "include",
+    headers: {
+      "X-Waybill-Token": token,
+    },
   });
   if (!res.ok || res.status !== 200) {
     const err = await res.json();

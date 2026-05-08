@@ -22,7 +22,8 @@ func NewDriverService(driverRepo repositories.DriverRepository, vehicleRepo repo
 }
 
 func (s *DriverService) CreateDriver(ctx context.Context, req models.CreateDriverReq) error {
-	vehicleExists, err := s.vehicleRepo.ExistsByID(ctx, req.VehicleID)
+	if req.VehicleID != nil {
+		vehicleExists, err := s.vehicleRepo.ExistsByID(ctx, *req.VehicleID)
 
 	if err != nil {
 		return apperr.New(apperr.Internal, "هنگام دریافت اطلاعات وسیله ی نفلیه خطایی رخ داد")
@@ -30,6 +31,7 @@ func (s *DriverService) CreateDriver(ctx context.Context, req models.CreateDrive
 
 	if !vehicleExists {
 		return apperr.New(apperr.Internal, "وسیله ی نفلیه وجود ندارد")
+	}
 	}
 
 	if req.Status == "" {
@@ -57,7 +59,7 @@ func (s *DriverService) CreateDriver(ctx context.Context, req models.CreateDrive
 		}
 	}
 
-	err = s.driverRepo.Create(ctx, req)
+	err := s.driverRepo.Create(ctx, req)
 	if err != nil {
 		return apperr.New(apperr.Internal, "هنگام ساخت راننده خطایی رخ داد.")
 	}
@@ -73,7 +75,7 @@ func (s *DriverService) GetDriver(ctx context.Context, driverId int64) (models.D
 	driver, err := s.driverRepo.GetDriverByID(ctx, driverId)
 	if err != nil {
 		log.Println("ERROR: ", err.Error())
-		return models.DriverDetails{}, apperr.New(apperr.NotFound, "خطا: دریافت اطلاعات وسیله نقلیه با خطا مواجه شد.")
+		return models.DriverDetails{}, apperr.New(apperr.Invalid, "خطا: دریافت اطلاعات وسیله نقلیه با خطا مواجه شد.")
 	}
 
 	return driver, nil

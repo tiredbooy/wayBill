@@ -29,7 +29,7 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup: func(ctx context.Context) {
 			app.startup(ctx)
-			startTray(ctx)      // <-- add this line
+			// startTray(ctx)      // <-- add this line
 		},
 		Bind: []interface{}{
 			app,
