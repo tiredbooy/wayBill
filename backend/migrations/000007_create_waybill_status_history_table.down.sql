@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS waybill_status_history;

@@ -1,0 +1,53 @@
+# .air.toml (optimized for a backend folder)
+
+root = "."
+tmp_dir = "tmp"
+
+# Air can automatically load env files before build/run
+env_files = [".env"]
+
+[build]
+  # Faster dev builds: avoid VCS stamping overhead
+  cmd = "go build -buildvcs=false -o ./tmp/waybill-server ./cmd/server"
+
+  # Recommended modern way to run the built binary
+  entrypoint = ["./tmp/waybill-server"]
+
+  # If rebuilds feel too “twitchy”, increase slightly (ms)
+  delay = 150
+
+  # Watch only what matters
+  include_ext = ["go", "sql", "tmpl", "tpl", "html", "json", "yaml", "yml", "toml"]
+
+  # Don’t watch heavy/noisy dirs
+  exclude_dir = [
+    "tmp",
+    "vendor",
+    "testdata",
+    ".git",
+    ".idea",
+    ".vscode",
+    "node_modules",
+    "dist",
+    "build",
+    "target"
+  ]
+
+  # Ignore test files for rebuild triggers
+  exclude_regex = ["_test\\.go"]
+
+  # Skip rebuilds when file content didn’t actually change
+  exclude_unchanged = true
+
+  # Keep running old binary if build fails (prevents dev downtime)
+  stop_on_error = false
+
+[log]
+  time = true
+
+[screen]
+  clear_on_rebuild = true
+  keep_scroll = true
+
+[misc]
+  clean_on_exit = true
