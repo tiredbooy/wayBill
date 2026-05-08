@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
-  <!-- 1. Basic Product Information -->
   <Product
     Id="*"
     Name="Waybill"
@@ -9,41 +8,69 @@
     Version="1.0.0"
     Manufacturer="Softdash"
     UpgradeCode="b9190081-b48a-4815-b72b-ff141e36cec4">
-    
-    <!-- 2. Package Settings -->
+
     <Package
       InstallerVersion="200"
       Compressed="yes"
-      InstallScope="perMachine" />
+      InstallScope="perMachine"
+      Description="Waybill Desktop Application" />
 
-    <!-- 3. Installer UI (a simple, native-looking wizard) -->
-    <UIRef Id="WixUI_Mondo" />
+    <!-- 👇 THIS is the missing part – forces embedding -->
+    <Media Id="1" Cabinet="waybill.cab" EmbedCab="yes" />
 
-    <!-- 4. Directory Structure for Installation -->
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFilesFolder">
         <Directory Id="INSTALLFOLDER" Name="Waybill">
-          
-          <!-- Your main executable -->
           <Component Id="MainExecutable" Guid="*">
-            <File Id="waybillExe" Name="waybill.exe" Source="build/bin/waybill.exe" KeyPath="yes" />
+            <File Id="waybillExe"
+                  Name="waybill.exe"
+                  Source="build/bin/waybill.exe"
+                  KeyPath="yes" />
           </Component>
-          
-          <!-- Any other files or folders would go here -->
-          
+          <Component Id="AppIconFile" Guid="*">
+            <File Id="icon.png"
+                  Name="icon.png"
+                  Source="icon.ico"
+                  KeyPath="yes" />
+          </Component>
         </Directory>
       </Directory>
-      
-      <!-- 5. Create a Shortcut in the Start Menu -->
+
       <Directory Id="ProgramMenuFolder">
-        <Directory Id="ApplicationProgramsFolder" Name="Waybill"/>
+        <Directory Id="ApplicationProgramsFolder" Name="Waybill" />
       </Directory>
+      <Directory Id="DesktopFolder" Name="Desktop" />
     </Directory>
 
-    <!-- 6. Feature: What the User Installs -->
-    <Feature Id="ProductFeature" Title="Waybill" Level="1">
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="StartMenuShortcut" Guid="*">
+        <Shortcut Id="startMenuWaybill" Name="Waybill" Description="Launch Waybill"
+                  Target="[INSTALLFOLDER]waybill.exe" WorkingDirectory="INSTALLFOLDER"
+                  Icon="icon.png" />
+        <RemoveFolder Id="RemoveAppFolder" On="uninstall" />
+        <RegistryValue Root="HKMU" Key="Software\Softdash\Waybill" Name="installed"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="DesktopFolder">
+      <Component Id="DesktopShortcut" Guid="*">
+        <Shortcut Id="desktopWaybill" Name="Waybill" Description="Launch Waybill"
+                  Target="[INSTALLFOLDER]waybill.exe" WorkingDirectory="INSTALLFOLDER"
+                  Icon="icon.png" />
+        <RegistryValue Root="HKMU" Key="Software\Softdash\Waybill\Desktop" Name="installed"
+                       Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <Feature Id="Complete" Title="Waybill" Level="1">
       <ComponentRef Id="MainExecutable" />
+      <ComponentRef Id="AppIconFile" />
+      <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="DesktopShortcut" />
     </Feature>
 
+    <Icon Id="icon.png" SourceFile="icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="icon.png" />
   </Product>
 </Wix>
