@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <!-- 1. Basic Product Information -->
+  <Product
+    Id="*"
+    Name="Waybill"
+    Language="1033"
+    Version="1.0.0"
+    Manufacturer="Softdash"
+    UpgradeCode="b9190081-b48a-4815-b72b-ff141e36cec4">
+    
+    <!-- 2. Package Settings -->
+    <Package
+      InstallerVersion="200"
+      Compressed="yes"
+      InstallScope="perMachine" />
+
+    <!-- 3. Installer UI (a simple, native-looking wizard) -->
+    <UIRef Id="WixUI_Mondo" />
+
+    <!-- 4. Directory Structure for Installation -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="Waybill">
+          
+          <!-- Your main executable -->
+          <Component Id="MainExecutable" Guid="*">
+            <File Id="waybillExe" Name="waybill.exe" Source="build/bin/waybill.exe" KeyPath="yes" />
+          </Component>
+          
+          <!-- Any other files or folders would go here -->
+          
+        </Directory>
+      </Directory>
+      
+      <!-- 5. Create a Shortcut in the Start Menu -->
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="Waybill"/>
+      </Directory>
+    </Directory>
+
+    <!-- 6. Feature: What the User Installs -->
+    <Feature Id="ProductFeature" Title="Waybill" Level="1">
+      <ComponentRef Id="MainExecutable" />
+    </Feature>
+
+  </Product>
+</Wix>

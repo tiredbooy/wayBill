@@ -47,7 +47,6 @@ export function WaybillActions({ waybillId }: Props) {
     try {
       const blob = await downloadWaybillDetailCSV(waybillId);
 
-      // Convert blob to base64 (the bridge expects a string)
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64data = reader.result as string;

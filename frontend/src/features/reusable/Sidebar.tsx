@@ -9,6 +9,7 @@ import {
 import type { ComponentProps } from "react";
 import { navMain } from "./NavItems";
 import { NavMain } from "./NavMain";
+import logo from "@/assets/company-logo.png";
 
 export default function Sidebar({
   ...props
@@ -30,7 +31,7 @@ export default function Sidebar({
             <span className="truncate font-semibold">سافت دش</span>
             <span className="truncate text-xs">مهدی کاظمی</span>
           </div> */}
-          <img src="../../assets/compony-logo.png" />
+          <img src={logo} alt="company Logo" />
         </div>
       </SidebarHeader>
 
