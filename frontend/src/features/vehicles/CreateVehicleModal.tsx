@@ -5,14 +5,18 @@ import type { Dispatch, SetStateAction } from "react";
 
 interface Props {
   open: boolean;
-  onOpenChange?: Dispatch<SetStateAction<boolean>>
+  onOpenChange?: Dispatch<SetStateAction<boolean>>;
+  shouldNavigate?: boolean;
 }
 
-export default function CreateVehicleModal({ open }: Props) {
+export default function CreateVehicleModal({ open, shouldNavigate }: Props) {
   return (
     <Dialog open={open}>
       <DialogContent>
-        <CreateVehicleSection breadCrump={false} />
+        <CreateVehicleSection
+          breadCrump={false}
+          shouldNavigate={shouldNavigate}
+        />
       </DialogContent>
     </Dialog>
   );

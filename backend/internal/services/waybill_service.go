@@ -34,8 +34,8 @@ func (s *WaybillService) CreateWaybill(ctx context.Context, req models.CreateWay
 		*req.WaybillNumber = waybillNum.String()
 	}
 
-	if !*req.HaveInsurance && *req.InsuranceAmount > 0 {
-		*req.HaveInsurance = true
+	if !req.HaveInsurance && req.InsuranceAmount > 0 {
+		req.HaveInsurance = true
 	}
 
 	if req.SenderID <= 0 {

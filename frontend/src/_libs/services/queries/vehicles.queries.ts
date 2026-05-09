@@ -79,7 +79,7 @@ export function useDeleteVehicle() {
   });
 }
 
-export function useUpdateVehicle() {
+export function useUpdateVehicle(shouldNavigate: boolean = true) {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
@@ -98,7 +98,9 @@ export function useUpdateVehicle() {
       });
       toast.success("خودرو با موفقیت ویرایش شد.");
 
-      setTimeout(() => navigate("/dashboard/vehicles"), 500);
+      if (shouldNavigate) {
+        setTimeout(() => navigate("/dashboard/vehicles"), 500);
+      }
     },
 
     onError: (e) => {

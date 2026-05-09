@@ -21,6 +21,7 @@ import { FormInput } from "../reusable/form-inputs/FormInput";
 interface Props {
   mode?: "edit" | "create";
   vehicle?: VehicleResponse;
+  shouldNavigate?: boolean;
 }
 
 const vehicleSchema = z.object({
@@ -36,7 +37,11 @@ const vehicleSchema = z.object({
 
 type VehicleFormValues = z.Infer<typeof vehicleSchema>;
 
-export default function VehiclesForm({ mode = "create", vehicle }: Props) {
+export default function VehiclesForm({
+  mode = "create",
+  vehicle,
+  shouldNavigate,
+}: Props) {
   const form = useForm<VehicleFormValues>({
     resolver: zodResolver(vehicleSchema),
     defaultValues: {
@@ -59,7 +64,7 @@ export default function VehiclesForm({ mode = "create", vehicle }: Props) {
   } = form;
 
   const createVehicle = useCreateVehicle();
-  const updateVehicle = useUpdateVehicle();
+  const updateVehicle = useUpdateVehicle(shouldNavigate);
 
   const navigate = useNavigate();
 
@@ -76,7 +81,9 @@ export default function VehiclesForm({ mode = "create", vehicle }: Props) {
       updateVehicle.mutateAsync(req);
     }
 
-    navigate("/dashboard/vehicles");
+    if (shouldNavigate) {
+      navigate("/dashboard/vehicles");
+    }
   };
 
   return (

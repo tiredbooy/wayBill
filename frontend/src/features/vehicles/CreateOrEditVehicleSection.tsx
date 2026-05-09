@@ -12,9 +12,10 @@ interface Props {
   mode?: "edit" | "create";
   vehicle?: VehicleResponse;
   breadCrump?: boolean
+  shouldNavigate?: boolean
 }
 
-export default function CreateOrEditVehicleSection({ mode, vehicle, breadCrump }: Props) {
+export default function CreateOrEditVehicleSection({ mode, vehicle, breadCrump, shouldNavigate }: Props) {
   return (
     <div className="flex flex-col px-4 py-8 gap-5">
       {breadCrump && <Breadcrumb
@@ -37,7 +38,7 @@ export default function CreateOrEditVehicleSection({ mode, vehicle, breadCrump }
           </CardDescription>
         </CardHeader>
       </Card>
-      <VehiclesForm mode={mode} vehicle={vehicle} />
+      <VehiclesForm mode={mode} vehicle={vehicle} shouldNavigate={shouldNavigate} />
     </div>
   );
 }

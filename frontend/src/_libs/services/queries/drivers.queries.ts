@@ -44,7 +44,7 @@ export function useDriver(driverID: number) {
   });
 }
 
-export function useCreateDriver() {
+export function useCreateDriver(shouldNavigate: boolean = true) {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
@@ -57,7 +57,9 @@ export function useCreateDriver() {
       });
       toast.success("راننده با موفقیت ساخته شد.");
 
-      setTimeout(() => navigate("/dashboard/drivers"), 500);
+      if (shouldNavigate) {
+        setTimeout(() => navigate("/dashboard/drivers"), 500);
+      }
     },
 
     onError: (e) => {
@@ -66,7 +68,7 @@ export function useCreateDriver() {
   });
 }
 
-export function useUpdateDriver() {
+export function useUpdateDriver(shouldNavigate: boolean = true) {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
@@ -85,7 +87,9 @@ export function useUpdateDriver() {
       });
       toast.success("راننده با موفقیت ویرایش شد.");
 
-      setTimeout(() => navigate("/dashboard/drivers"), 500);
+      if (shouldNavigate) {
+        setTimeout(() => navigate("/dashboard/drivers"), 500);
+      }
     },
 
     onError: (e) => {

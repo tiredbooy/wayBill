@@ -108,8 +108,8 @@ type CreateWaybillReq struct {
 	TotalPackages         *int64     `json:"total_packages"`
 	Desription            *string    `json:"description"`
 	FreightCharge         *float64   `json:"freight_charge"`
-	HaveInsurance         *bool      `json:"have_insurance"`
-	InsuranceAmount       *float64   `json:"insurance_amount"`
+	HaveInsurance         bool       `json:"have_insurance"`
+	InsuranceAmount       float64    `json:"insurance_amount,omitempty"`
 	OtherCharges          *float64   `json:"other_charges"`
 	PaymentStatus         *string    `json:"payment_status"`
 	Notes                 *string    `json:"notes"`

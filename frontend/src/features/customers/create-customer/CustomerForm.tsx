@@ -19,6 +19,7 @@ interface Props {
   mode: "edit" | "create";
   customer?: CustomerDetail;
   onSuccess?: () => void;
+  shouldNavigate?: boolean;
 }
 
 const customerSchema = z.object({
@@ -37,9 +38,14 @@ const customerSchema = z.object({
 
 type CustomerFormValues = z.infer<typeof customerSchema>;
 
-export function CustomerForm({ mode = "create", customer, onSuccess }: Props) {
-  const createCustomer = useCreateCustomer();
-  const updateCustomer = useUpdateCustomer();
+export function CustomerForm({
+  mode = "create",
+  customer,
+  onSuccess,
+  shouldNavigate,
+}: Props) {
+  const createCustomer = useCreateCustomer(shouldNavigate);
+  const updateCustomer = useUpdateCustomer(shouldNavigate);
 
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
@@ -79,7 +85,8 @@ export function CustomerForm({ mode = "create", customer, onSuccess }: Props) {
     }
   };
 
-  const isPending = createCustomer.isPending || updateCustomer.isPending || isSubmitting;
+  const isPending =
+    createCustomer.isPending || updateCustomer.isPending || isSubmitting;
 
   return (
     <Form {...form}>
@@ -155,7 +162,13 @@ export function CustomerForm({ mode = "create", customer, onSuccess }: Props) {
         </div>
 
         <Button type="submit" className="w-full" disabled={isPending}>
-          {isPending ? <Spinner /> : mode === "create" ? "ثبت مشتری" : "ویرایش مشتری"}
+          {isPending ? (
+            <Spinner />
+          ) : mode === "create" ? (
+            "ثبت مشتری"
+          ) : (
+            "ویرایش مشتری"
+          )}
         </Button>
       </form>
     </Form>

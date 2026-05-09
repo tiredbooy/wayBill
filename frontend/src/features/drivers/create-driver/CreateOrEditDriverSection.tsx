@@ -11,11 +11,13 @@ import { DriverForm } from "./DriverForm";
 interface Props {
   mode?: "edit" | "create";
   driver?: DriverDetail;
+  shouldNavigate?: boolean;
 }
 
 export default function CreateOrEditDriverSection({
   mode = "create",
   driver,
+  shouldNavigate,
 }: Props) {
   return (
     <div className="flex flex-col px-4 py-8 gap-5">
@@ -38,7 +40,7 @@ export default function CreateOrEditDriverSection({
         </CardHeader>
       </Card>
 
-      <DriverForm mode={mode} driver={driver} />
+      <DriverForm mode={mode} driver={driver} shouldNavigate={shouldNavigate} />
     </div>
   );
 }

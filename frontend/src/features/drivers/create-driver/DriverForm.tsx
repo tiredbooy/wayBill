@@ -23,6 +23,7 @@ import { z } from "zod";
 interface Props {
   mode: "edit" | "create";
   driver?: DriverDetail;
+  shouldNavigate?: boolean;
 }
 
 const driverSchema = z.object({
@@ -41,7 +42,7 @@ const driverSchema = z.object({
 
 type DriverFormValues = z.infer<typeof driverSchema>;
 
-export function DriverForm({ mode = "create", driver }: Props) {
+export function DriverForm({ mode = "create", driver, shouldNavigate }: Props) {
   const form = useForm<DriverFormValues>({
     resolver: zodResolver(driverSchema),
     defaultValues: {
@@ -64,8 +65,8 @@ export function DriverForm({ mode = "create", driver }: Props) {
   const { data, isLoading } = useVehicles({
     q: vehicleSearch ?? "",
   });
-  const createDriver = useCreateDriver();
-  const updateDriver = useUpdateDriver();
+  const createDriver = useCreateDriver(shouldNavigate);
+  const updateDriver = useUpdateDriver(shouldNavigate);
 
   const {
     control,
@@ -81,7 +82,6 @@ export function DriverForm({ mode = "create", driver }: Props) {
         value: String(v.id),
       };
     }) ?? [];
-
   const onSubmit = async (data: DriverFormValues) => {
     const vehicleIdStr = data.vehicle_id?.trim();
     const numericVehicleId = vehicleIdStr ? Number(vehicleIdStr) : undefined;
@@ -101,7 +101,7 @@ export function DriverForm({ mode = "create", driver }: Props) {
           driverID: Number(driver?.id),
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
     }
   };
@@ -205,7 +205,7 @@ export function DriverForm({ mode = "create", driver }: Props) {
           </div>
         </form>
       </Form>
-      <CreateVehicleModal open={vehicleOpen} />
+      <CreateVehicleModal open={vehicleOpen} shouldNavigate={false} />
     </>
   );
 }

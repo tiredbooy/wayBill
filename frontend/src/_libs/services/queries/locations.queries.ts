@@ -59,7 +59,7 @@ export function useCreateLocation(shouldNavigate: boolean = true) {
   });
 }
 
-export function useUpdateLocation() {
+export function useUpdateLocation(shouldNavigate: boolean = true) {
   const qc = useQueryClient();
   const navigate = useNavigate();
   return useMutation({
@@ -73,7 +73,9 @@ export function useUpdateLocation() {
     onSuccess: async () => {
       await qc.invalidateQueries({ queryKey: LocationsKeys.all });
       toast.success("موقعیت با موفقیت به‌روزرسانی شد.");
-      setTimeout(() => navigate("/dashboard/locations"), 500);
+      if (shouldNavigate) {
+        setTimeout(() => navigate("/dashboard/locations"), 500);
+      }
     },
     onError: (e) => toast.error(e.message),
   });

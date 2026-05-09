@@ -13,6 +13,7 @@ interface Props {
   mode?: "create" | "edit";
   location?: LocationDetail;
   onSuccess?: () => void;
+  shouldNavigate?: boolean
 }
 
 const schema = z.object({
@@ -24,9 +25,9 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export function LocationForm({ mode = "create", location, onSuccess }: Props) {
-  const create = useCreateLocation();
-  const update = useUpdateLocation();
+export function LocationForm({ mode = "create", location, onSuccess, shouldNavigate }: Props) {
+  const create = useCreateLocation(shouldNavigate);
+  const update = useUpdateLocation(shouldNavigate);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),

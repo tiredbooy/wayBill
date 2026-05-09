@@ -51,12 +51,14 @@ export const WaybillPrintContent = forwardRef<
           >
             {convertToPersianDigits(getDisplayWaybillNumber(waybill))}
           </div>
-          <div className="text-[9px] text-gray-500 print:text-gray-400 mt-1 pt-1 border-t border-gray-200 print:border-gray-300">
-            <span className="font-medium">تاریخ: </span>
-            <span style={{ direction: "ltr" }}>
-              {new Date(waybill?.issue_date)?.toLocaleDateString("fa-IR")}
-            </span>
-          </div>
+          {waybill.issue_date && (
+            <div className="text-[9px] text-gray-500 print:text-gray-400 mt-1 pt-1 border-t border-gray-200 print:border-gray-300">
+              <span className="font-medium">تاریخ: </span>
+              <span style={{ direction: "ltr" }}>
+                {new Date(waybill.issue_date).toLocaleDateString("fa-IR")}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Centered company information */}
@@ -67,9 +69,11 @@ export const WaybillPrintContent = forwardRef<
           </h1>
 
           {/* Company name (slightly larger) */}
-          <h2 className="text-sm font-bold text-gray-900 mb-1">
-            {setting?.company_name}
-          </h2>
+          {setting?.company_name && (
+            <h2 className="text-sm font-bold text-gray-900 mb-1">
+              {setting.company_name}
+            </h2>
+          )}
 
           {/* Address */}
           {setting?.address && (
@@ -79,15 +83,17 @@ export const WaybillPrintContent = forwardRef<
           )}
 
           {/* Contact – compact, without extra label */}
-          <p className="text-[10px] text-gray-700">
-            تلفن: {convertToPersianDigits(phone1) || ""}
-            {setting?.contact?.fixed && (
-              <>
-                {" "}
-                &nbsp;|&nbsp; {convertToPersianDigits(setting.contact.fixed)}
-              </>
-            )}
-          </p>
+          {(phone1 || setting?.contact?.fixed) && (
+            <p className="text-[10px] text-gray-700">
+              {phone1 && <>تلفن: {convertToPersianDigits(phone1)}</>}
+              {setting?.contact?.fixed && (
+                <>
+                  {" "}
+                  &nbsp;|&nbsp; {convertToPersianDigits(setting.contact.fixed)}
+                </>
+              )}
+            </p>
+          )}
         </div>
       </div>
 
@@ -98,21 +104,30 @@ export const WaybillPrintContent = forwardRef<
             فرستنده
           </h3>
           <div className="space-y-1 text-[11px]">
-            <p>
-              <span className="font-medium">نام / شرکت:</span> {waybill.sender}
-            </p>
-            <p>
-              <span className="font-medium">مبدا:</span>{" "}
-              {waybill.origin_location}
-            </p>
-            <p>
-              <span className="font-medium">تلفن همراه:</span>{" "}
-              {convertToPersianDigits(waybill.sender_phone_mobile)}
-            </p>
-            <p>
-              <span className="font-medium">تلفن ثابت:</span>{" "}
-              {convertToPersianDigits(waybill.sender_phone_fixed)}
-            </p>
+            {waybill.sender && (
+              <p>
+                <span className="font-medium">نام / شرکت:</span>{" "}
+                {waybill.sender}
+              </p>
+            )}
+            {waybill.origin_location && (
+              <p>
+                <span className="font-medium">مبدا:</span>{" "}
+                {waybill.origin_location}
+              </p>
+            )}
+            {waybill.sender_phone_mobile && (
+              <p>
+                <span className="font-medium">تلفن همراه:</span>{" "}
+                {convertToPersianDigits(waybill.sender_phone_mobile)}
+              </p>
+            )}
+            {waybill.sender_phone_fixed && (
+              <p>
+                <span className="font-medium">تلفن ثابت:</span>{" "}
+                {convertToPersianDigits(waybill.sender_phone_fixed)}
+              </p>
+            )}
           </div>
         </div>
         <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
@@ -120,22 +135,30 @@ export const WaybillPrintContent = forwardRef<
             گیرنده
           </h3>
           <div className="space-y-1 text-[11px]">
-            <p>
-              <span className="font-medium">نام / شرکت:</span>{" "}
-              {waybill.receiver}
-            </p>
-            <p>
-              <span className="font-medium">مقصد:</span>{" "}
-              {waybill.destination_location}
-            </p>
-            <p>
-              <span className="font-medium">تلفن همراه:</span>{" "}
-              {convertToPersianDigits(waybill.receiver_phone_mobile)}
-            </p>
-            <p>
-              <span className="font-medium">تلفن ثابت:</span>{" "}
-              {convertToPersianDigits(waybill.receiver_phone_fixed)}
-            </p>
+            {waybill.receiver && (
+              <p>
+                <span className="font-medium">نام / شرکت:</span>{" "}
+                {waybill.receiver}
+              </p>
+            )}
+            {waybill.destination_location && (
+              <p>
+                <span className="font-medium">مقصد:</span>{" "}
+                {waybill.destination_location}
+              </p>
+            )}
+            {waybill.receiver_phone_mobile && (
+              <p>
+                <span className="font-medium">تلفن همراه:</span>{" "}
+                {convertToPersianDigits(waybill.receiver_phone_mobile)}
+              </p>
+            )}
+            {waybill.receiver_phone_fixed && (
+              <p>
+                <span className="font-medium">تلفن ثابت:</span>{" "}
+                {convertToPersianDigits(waybill.receiver_phone_fixed)}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -147,21 +170,29 @@ export const WaybillPrintContent = forwardRef<
             راننده
           </h3>
           <div className="space-y-1 text-[11px]">
-            <p>
-              <span className="font-medium">نام:</span> {waybill.driver}
-            </p>
-            <p>
-              <span className="font-medium">کد ملی:</span>{" "}
-              {convertToPersianDigits(waybill.driver_national_code || "-")}
-            </p>
-            <p>
-              <span className="font-medium">گواهینامه:</span>{" "}
-              {convertToPersianDigits(waybill.driver_license_num || "-")}
-            </p>
-            <p>
-              <span className="font-medium">تلفن همراه:</span>{" "}
-              {convertToPersianDigits(waybill.driver_phone_num || "-")}
-            </p>
+            {waybill.driver && (
+              <p>
+                <span className="font-medium">نام:</span> {waybill.driver}
+              </p>
+            )}
+            {waybill.driver_national_code && (
+              <p>
+                <span className="font-medium">کد ملی:</span>{" "}
+                {convertToPersianDigits(waybill.driver_national_code)}
+              </p>
+            )}
+            {waybill.driver_license_num && (
+              <p>
+                <span className="font-medium">گواهینامه:</span>{" "}
+                {convertToPersianDigits(waybill.driver_license_num)}
+              </p>
+            )}
+            {waybill.driver_phone_num && (
+              <p>
+                <span className="font-medium">تلفن همراه:</span>{" "}
+                {convertToPersianDigits(waybill.driver_phone_num)}
+              </p>
+            )}
           </div>
         </div>
         <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
@@ -169,13 +200,17 @@ export const WaybillPrintContent = forwardRef<
             وسیله نقلیه
           </h3>
           <div className="space-y-1 text-[11px]">
-            <p>
-              <span className="font-medium">پلاک:</span>{" "}
-              {convertToPersianDigits(waybill.vehicle_plate || "-")}
-            </p>
-            <p>
-              <span className="font-medium">توضیحات:</span> {waybill.vehicle}
-            </p>
+            {waybill.vehicle_plate && (
+              <p>
+                <span className="font-medium">پلاک:</span>{" "}
+                {convertToPersianDigits(waybill.vehicle_plate)}
+              </p>
+            )}
+            {waybill.vehicle && (
+              <p>
+                <span className="font-medium">توضیحات:</span> {waybill.vehicle}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -186,14 +221,18 @@ export const WaybillPrintContent = forwardRef<
           مشخصات محموله
         </h3>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px]">
-          <span>
-            <span className="font-medium">وزن کل:</span>{" "}
-            {formatNumber(waybill.total_weight)} کیلوگرم
-          </span>
-          <span>
-            <span className="font-medium">تعداد بسته‌ها:</span>{" "}
-            {formatNumber(waybill.total_packages)} عدد
-          </span>
+          {waybill.total_weight != null && (
+            <span>
+              <span className="font-medium">وزن کل:</span>{" "}
+              {formatNumber(waybill.total_weight)} کیلوگرم
+            </span>
+          )}
+          {waybill.total_packages != null && (
+            <span>
+              <span className="font-medium">تعداد بسته‌ها:</span>{" "}
+              {formatNumber(waybill.total_packages)} عدد
+            </span>
+          )}
           {waybill.description && (
             <span className="w-full">
               <span className="font-medium">شرح کالا:</span>{" "}
@@ -205,11 +244,10 @@ export const WaybillPrintContent = forwardRef<
 
       {/* ========== FINANCIAL ROW (one line) ========== */}
       <div className="bg-gray-100 p-2 rounded-md border border-gray-300 mb-5 flex flex-wrap justify-between items-center text-[11px] font-medium">
-        <span>کرایه: {formatNumber(waybill.freight_charge)} تومان</span>
+        <span>کرایه: {formatNumber(waybill.freight_charge ?? 0)} تومان</span>
         <span>
-          {" "}
           بیمه:{" "}
-          {waybill.have_insurance
+          {waybill.have_insurance && waybill.insurance_amount != null
             ? `${formatNumber(waybill.insurance_amount)} تومان`
             : "ندارد"}
         </span>
@@ -217,11 +255,10 @@ export const WaybillPrintContent = forwardRef<
           <span> سایر: {formatNumber(waybill.other_charges)} تومان</span>
         )}
         <span>
-          {" "}
-          وضعیت پرداخت: {translatePaymentStatus(waybill.payment_status)}
+          وضعیت پرداخت:{" "}
+          {translatePaymentStatus(waybill.payment_status ?? "unknown")}
         </span>
         <span className="text-black font-bold text-sm">
-          {" "}
           مجموع: {formatNumber(totalAmount)} تومان
         </span>
       </div>
@@ -238,7 +275,7 @@ export const WaybillPrintContent = forwardRef<
       <div className="flex justify-between items-end mt-2">
         {setting?.company_name && (
           <div className="text-[10px] text-gray-400">
-            چاپ شده در {setting?.company_name}
+            چاپ شده در {setting.company_name}
           </div>
         )}
 

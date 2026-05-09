@@ -55,10 +55,10 @@ func (r *waybillRepository) Create(ctx context.Context, req models.CreateWaybill
 	if freightCharge > 0 && otherCharges > 0 {
 		totalAmount = freightCharge + otherCharges
 	}
-	if req.HaveInsurance != nil && *req.HaveInsurance {
+	if req.HaveInsurance {
 		insuranceAmount := 0.0
-		if req.InsuranceAmount != nil {
-			insuranceAmount = *req.InsuranceAmount
+		if req.InsuranceAmount != 0 {
+			insuranceAmount = req.InsuranceAmount
 		}
 		totalAmount += insuranceAmount
 	}

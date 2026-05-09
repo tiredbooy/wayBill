@@ -256,7 +256,7 @@ export function WaybillForm({ mode = "create", waybill }: Props) {
             outputType="iso"
             control={control}
             name="actual_delivery_date"
-            label="تاریخ تحویل واقعی"
+            label="تاریخ تحویل"
           />
           <FormInput
             control={control}
@@ -410,12 +410,36 @@ export function WaybillForm({ mode = "create", waybill }: Props) {
       </Form>
 
       {/* Modals */}
-      <CreateCustomerModal open={senderOpen} onOpenChange={setSenderOpen} />
-      <CreateCustomerModal open={receiverOpen} onOpenChange={setReceiverOpen} />
-      <CreateDriverModal open={driverOpen} onOpenChange={setDriverOpen} />
-      <CreateVehicleModal open={vehicleOpen} onOpenChange={setVehicleOpen} />
-      <CreateLocationModal open={originOpen} onOpenChange={setOriginOpen} />
-      <CreateLocationModal open={destOpen} onOpenChange={setDestOpen} />
+      <CreateCustomerModal
+        open={senderOpen}
+        onOpenChange={setSenderOpen}
+        shouldNavigate={false}
+      />
+      <CreateCustomerModal
+        open={receiverOpen}
+        onOpenChange={setReceiverOpen}
+        shouldNavigate={false}
+      />
+      <CreateDriverModal
+        open={driverOpen}
+        onOpenChange={setDriverOpen}
+        shouldNavigate={false}
+      />
+      <CreateVehicleModal
+        open={vehicleOpen}
+        onOpenChange={setVehicleOpen}
+        shouldNavigate={false}
+      />
+      <CreateLocationModal
+        open={originOpen}
+        onOpenChange={setOriginOpen}
+        shouldNavigate={false}
+      />
+      <CreateLocationModal
+        open={destOpen}
+        onOpenChange={setDestOpen}
+        shouldNavigate={false}
+      />
     </>
   );
 }

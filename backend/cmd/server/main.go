@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"log"
@@ -18,4 +18,8 @@ func Start() {
     if err := app.Run(); err != nil {
         log.Fatalf("server failed: %v", err)
     }
+}
+
+func main() {
+    Start()
 }

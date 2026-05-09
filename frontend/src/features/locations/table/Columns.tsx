@@ -28,11 +28,6 @@ export const makeLocationColumns: ColumnDef<LocationDetail>[] = [
     cell: ({ row }) => row.original.address || "—",
   },
   {
-    accessorKey: "created_at",
-    header: "تاریخ ثبت",
-    cell: ({ row }) => new Date(row?.original?.created_at).toLocaleDateString("fa-IR"),
-  },
-  {
     accessorKey: "actions",
     header: "فعالیت",
     cell: ({ row }) => <LocationActions locationId={row.original.id} />,

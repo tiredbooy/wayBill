@@ -43,7 +43,7 @@ export function useCustomer(customerId: number) {
   });
 }
 
-export function useCreateCustomer() {
+export function useCreateCustomer(shouldNavigate: boolean = true) {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
@@ -56,7 +56,9 @@ export function useCreateCustomer() {
       });
       toast.success("مشتری با موفقیت ساخته شد.");
 
-      setTimeout(() => navigate("/dashboard/customers"), 500);
+      if (shouldNavigate) {
+        setTimeout(() => navigate("/dashboard/customers"), 500);
+      }
     },
 
     onError: (e) => {
@@ -65,13 +67,18 @@ export function useCreateCustomer() {
   });
 }
 
-export function useUpdateCustomer() {
+export function useUpdateCustomer(shouldNavigate: boolean = true) {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: ({ data, customerId }: { data: UpdateCustomerReq; customerId: number }) =>
-      updateCustomer(data, customerId),
+    mutationFn: ({
+      data,
+      customerId,
+    }: {
+      data: UpdateCustomerReq;
+      customerId: number;
+    }) => updateCustomer(data, customerId),
 
     onSuccess: async () => {
       await qc.invalidateQueries({
@@ -79,7 +86,9 @@ export function useUpdateCustomer() {
       });
       toast.success("مشتری با موفقیت ویرایش شد.");
 
-      setTimeout(() => navigate("/dashboard/customers"), 500);
+      if (shouldNavigate) {
+        setTimeout(() => navigate("/dashboard/customers"), 500);
+      }
     },
 
     onError: (e) => {
