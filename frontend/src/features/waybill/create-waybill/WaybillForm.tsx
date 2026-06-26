@@ -1,7 +1,7 @@
-import { useForm } from "react-hook-form";
+import { useForm, type FieldErrors, type SubmitHandler, type SubmitErrorHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 
 import {
   useCreateWaybill,
@@ -15,21 +15,23 @@ import { useLocations } from "@/_libs/services/queries/locations.queries";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
-import { FormInput } from "@/features/reusable/form-inputs/FormInput";
-import { FormCommandSelect } from "@/features/reusable/form-inputs/CommandSelect";
-import { FormJalaliDatePicker } from "@/features/reusable/form-inputs/FormDatePicker";
-import { FormCheckbox } from "@/features/reusable/form-inputs/FormCheckbox";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+import { BasicInfoSection } from "./BasicInfoSection";
+import { EntitiesSection } from "./EntitiesSection";
+import { CargoSection } from "./CargoSection";
+import { FinancialSection } from "./FinancialSection";
 
 import CreateCustomerModal from "@/features/customers/create-customer/CreateCustomerModal";
 import CreateDriverModal from "@/features/drivers/create-driver/CreateDriverModal";
 import CreateVehicleModal from "@/features/vehicles/CreateVehicleModal";
 import CreateLocationModal from "@/features/locations/CreateLocationModal";
 
+import { waybillSchema } from "./schema";
+import type { WaybillFormValues } from "./schema";
 import type { WaybillDetail } from "@/_libs/types/waybill-types";
-import type { CustomerDetail } from "@/_libs/types/customer-types";
 import type { DriverResponse } from "@/_libs/types/driver-types";
-import type { VehicleResponse } from "@/_libs/types/vehicle-types";
-import type { LocationDetail } from "@/_libs/types/location-types";
 
 interface Props {
   mode: "edit" | "create";
@@ -37,33 +39,30 @@ interface Props {
   onSuccess?: () => void;
 }
 
-const waybillSchema = z.object({
-  waybill_number: z.string().optional(),
-  issue_date: z.string().min(1, "تاریخ صدور الزامی است"),
-  dispatch_date: z.string().min(1, "تاریخ بارگیری الزامی است"),
-  actual_delivery_date: z.string().optional(),
-  status: z.string().optional(),
-  sender_id: z.string().min(1, "فرستنده الزامی است"),
-  receiver_id: z.string().min(1, "گیرنده الزامی است"),
-  driver_id: z.string().min(1, "راننده الزامی است"),
-  vehicle_id: z.string().min(1, "وسیله نقلیه الزامی است"),
-  origin_location_id: z.string().min(1, "مبدا الزامی است"),
-  destination_location_id: z.string().min(1, "مقصد الزامی است"),
-  total_weight: z.string().optional(),
-  total_packages: z.string().optional(),
-  description: z.string().optional(),
-  freight_charge: z.string().optional(),
-  have_insurance: z.boolean().optional(),
-  insurance_amount: z.string().optional(),
-  other_charges: z.string().optional(),
-  payment_status: z.string().optional(),
-  notes: z.string().optional(),
-});
+const fieldLabels: Record<string, string> = {
+  issue_date: "تاریخ صدور",
+  dispatch_date: "تاریخ بارگیری",
+  actual_delivery_date: "تاریخ تحویل واقعی",
+  status: "وضعیت",
+  sender_id: "فرستنده",
+  receiver_id: "گیرنده",
+  driver_id: "راننده",
+  vehicle_id: "وسیله نقلیه",
+  origin_location_id: "مبدا",
+  destination_location_id: "مقصد",
+  total_weight: "وزن کل",
+  total_packages: "تعداد بسته",
+  description: "شرح محموله",
+  freight_charge: "کرایه حمل",
+  insurance_amount: "مبلغ بیمه",
+  other_charges: "سایر هزینه‌ها",
+  payment_status: "وضعیت پرداخت",
+  notes: "یادداشت‌ها",
+};
 
-type WaybillFormValues = z.infer<typeof waybillSchema>;
+export function WaybillForm({ mode = "create", waybill, onSuccess }: Props) {
+  const [submitAttempted, setSubmitAttempted] = useState(false);
 
-export function WaybillForm({ mode = "create", waybill }: Props) {
-  // Search states
   const [senderSearch, setSenderSearch] = useState("");
   const [receiverSearch, setReceiverSearch] = useState("");
   const [driverSearch, setDriverSearch] = useState("");
@@ -71,7 +70,6 @@ export function WaybillForm({ mode = "create", waybill }: Props) {
   const [originSearch, setOriginSearch] = useState("");
   const [destSearch, setDestSearch] = useState("");
 
-  // Modal states
   const [senderOpen, setSenderOpen] = useState(false);
   const [receiverOpen, setReceiverOpen] = useState(false);
   const [driverOpen, setDriverOpen] = useState(false);
@@ -79,28 +77,18 @@ export function WaybillForm({ mode = "create", waybill }: Props) {
   const [originOpen, setOriginOpen] = useState(false);
   const [destOpen, setDestOpen] = useState(false);
 
-  // Data fetching
-  const { data: senders, isLoading: sendersLoading } = useCustomers({
-    q: senderSearch,
-  });
-  const { data: receivers, isLoading: receiversLoading } = useCustomers({
-    q: receiverSearch,
-  });
-  const { data: drivers, isLoading: driversLoading } = useDrivers({
-    q: driverSearch,
-  });
-  const { data: vehicles, isLoading: vehiclesLoading } = useVehicles({
-    q: vehicleSearch,
-  });
-  const { data: locations, isLoading: locationsLoading } = useLocations({
-    q: originSearch,
-  });
+  const { data: senders, isLoading: sendersLoading } = useCustomers({ q: senderSearch });
+  const { data: receivers, isLoading: receiversLoading } = useCustomers({ q: receiverSearch });
+  const { data: drivers, isLoading: driversLoading } = useDrivers({ q: driverSearch });
+  const { data: vehicles, isLoading: vehiclesLoading } = useVehicles({ q: vehicleSearch });
+  const { data: originLocations, isLoading: originLoading } = useLocations({ q: originSearch });
+  const { data: destLocations, isLoading: destLoading } = useLocations({ q: destSearch });
 
   const createWaybill = useCreateWaybill();
   const updateWaybill = useUpdateWaybill();
 
   const form = useForm<WaybillFormValues>({
-    resolver: zodResolver(waybillSchema),
+    resolver: zodResolver(waybillSchema) as any,
     defaultValues: {
       waybill_number: waybill?.waybill_number ?? "",
       issue_date: waybill?.issue_date ?? "",
@@ -111,335 +99,194 @@ export function WaybillForm({ mode = "create", waybill }: Props) {
       receiver_id: waybill?.receiver_id ? String(waybill.receiver_id) : "",
       driver_id: waybill?.driver_id ? String(waybill.driver_id) : "",
       vehicle_id: waybill?.vehicle_id ? String(waybill.vehicle_id) : "",
-      origin_location_id: waybill?.origin_location_id
-        ? String(waybill.origin_location_id)
-        : "",
+      origin_location_id: waybill?.origin_location_id ? String(waybill.origin_location_id) : "",
       destination_location_id: waybill?.destination_location_id
         ? String(waybill.destination_location_id)
         : "",
       total_weight: waybill?.total_weight ? String(waybill.total_weight) : "",
-      total_packages: waybill?.total_packages
-        ? String(waybill.total_packages)
-        : "",
+      total_packages: waybill?.total_packages ? String(waybill.total_packages) : "",
       description: waybill?.description ?? "",
-      freight_charge: waybill?.freight_charge
-        ? String(waybill.freight_charge)
-        : "",
+      freight_charge: waybill?.freight_charge ? String(waybill.freight_charge) : "",
       have_insurance: waybill?.have_insurance ?? false,
-      insurance_amount: waybill?.insurance_amount
-        ? String(waybill.insurance_amount)
-        : "",
-      other_charges: waybill?.other_charges
-        ? String(waybill.other_charges)
-        : "",
+      insurance_amount: waybill?.insurance_amount ? String(waybill.insurance_amount) : "",
+      other_charges: waybill?.other_charges ? String(waybill.other_charges) : "",
       payment_status: waybill?.payment_status ?? "",
       notes: waybill?.notes ?? "",
     },
+    mode: "onSubmit",
   });
 
   const {
     control,
     formState: { errors, isSubmitting },
-    handleSubmit,
     reset,
     watch,
     setValue,
+    setFocus,
   } = form;
 
   const haveInsurance = watch("have_insurance");
   const selectedDriverId = watch("driver_id");
 
   useEffect(() => {
-    if (!selectedDriverId || !drivers?.results) return;
-    const driver = drivers.results.find(
-      (d: DriverResponse) => d.id === Number(selectedDriverId),
-    );
+    if (!selectedDriverId || !drivers?.results?.length) return;
+
+    const driver = drivers.results.find((d: DriverResponse) => d.id === Number(selectedDriverId));
     if (driver?.vehicle_id) {
-      setValue("vehicle_id", String(driver?.vehicle_id));
-    } else {
-      setValue("vehicle_id", String(0));
+      setValue("vehicle_id", String(driver.vehicle_id), { shouldValidate: true, shouldDirty: true });
     }
-  }, [selectedDriverId, drivers, setValue]);
+  }, [selectedDriverId, drivers?.results, setValue]);
 
-  // Helper to map options
-  const mapCustomerOptions = (customers: CustomerDetail[]) =>
-    customers?.map((c) => ({ label: c.name, value: String(c.id) })) ?? [];
-  const mapDriverOptions = (drivers: DriverResponse[]) =>
-    drivers?.map((d) => ({
-      label: `${d.first_name} ${d.last_name}`,
-      value: String(d.id),
-    })) ?? [];
-  const mapVehicleOptions = (vehicles: VehicleResponse[]) =>
-    vehicles?.map((v) => ({ label: v.model, value: String(v.id) })) ?? [];
-  const mapLocationOptions = (locations: LocationDetail[]) =>
-    locations?.map((l) => ({ label: l.name, value: String(l.id) })) ?? [];
-
-  const onSubmit = async (data: WaybillFormValues) => {
-    // Convert to the API expected format (numbers)
-    const payload = {
-      ...data,
-      sender_id: data.sender_id ? Number(data.sender_id) : 0,
-      receiver_id: data.receiver_id ? Number(data.receiver_id) : 0,
-      driver_id: data.driver_id ? Number(data.driver_id) : 0,
-      vehicle_id: data.vehicle_id ? Number(data.vehicle_id) : 0,
-      origin_location_id: data.origin_location_id
-        ? Number(data.origin_location_id)
-        : 0,
-      destination_location_id: data.destination_location_id
-        ? Number(data.destination_location_id)
-        : 0,
-      total_weight: data.total_weight ? Number(data.total_weight) : undefined,
-      total_packages: data.total_packages
-        ? Number(data.total_packages)
-        : undefined,
-      freight_charge: data.freight_charge
-        ? Number(data.freight_charge)
-        : undefined,
-      insurance_amount: data.insurance_amount
-        ? Number(data.insurance_amount)
-        : undefined,
-      other_charges: data.other_charges
-        ? Number(data.other_charges)
-        : undefined,
-    };
-
-    if (mode === "create") {
-      await createWaybill.mutateAsync(payload);
-      reset();
-    } else if (mode === "edit" && waybill?.id) {
-      await updateWaybill.mutateAsync({ data: payload, waybillId: waybill.id });
+  const scrollAndFocus = useCallback((errs: FieldErrors<WaybillFormValues>) => {
+    const firstKey = Object.keys(errs)[0] as keyof WaybillFormValues;
+    if (firstKey) {
+      setTimeout(() => setFocus(firstKey), 150);
     }
-  };
+  }, [setFocus]);
 
-  const isPending =
-    createWaybill.isPending ||
-    updateWaybill.isPending ||
-    isSubmitting ||
-    sendersLoading ||
-    receiversLoading ||
-    driversLoading ||
-    vehiclesLoading ||
-    locationsLoading;
+  const onInvalid: SubmitErrorHandler<WaybillFormValues> = useCallback((errs) => {
+    setSubmitAttempted(true);
+    scrollAndFocus(errs);
+  }, [scrollAndFocus]);
 
-  const selectedDriver = drivers?.results?.find(
-    (d) => d.id === Number(selectedDriverId),
-  );
+  const onSubmit: SubmitHandler<WaybillFormValues> = useCallback(async (data) => {
+    setSubmitAttempted(false);
+    try {
+      const payload = {
+        waybill_number: data.waybill_number || undefined,
+        issue_date: data.issue_date || undefined,
+        dispatch_date: data.dispatch_date || undefined,
+        actual_delivery_date: data.actual_delivery_date || undefined,
+        status: data.status || undefined,
+        sender_id: Number(data.sender_id),
+        receiver_id: Number(data.receiver_id),
+        driver_id: Number(data.driver_id),
+        vehicle_id: Number(data.vehicle_id),
+        origin_location_id: Number(data.origin_location_id),
+        destination_location_id: Number(data.destination_location_id),
+        total_weight: data.total_weight ? parseFloat(data.total_weight) : undefined,
+        total_packages: data.total_packages ? parseInt(data.total_packages) : undefined,
+        description: data.description || undefined,
+        freight_charge: data.freight_charge ? parseFloat(data.freight_charge) : undefined,
+        have_insurance: data.have_insurance,
+        insurance_amount: data.insurance_amount ? parseFloat(data.insurance_amount) : 0,
+        other_charges: data.other_charges ? parseFloat(data.other_charges) : undefined,
+        payment_status: data.payment_status || undefined,
+        notes: data.notes || undefined,
+      };
+
+      if (mode === "create") {
+        await createWaybill.mutateAsync(payload);
+        toast.success("بارنامه با موفقیت ایجاد شد");
+        reset();
+      } else if (waybill?.id) {
+        await updateWaybill.mutateAsync({ data: payload, waybillId: waybill.id });
+        toast.success("بارنامه با موفقیت ویرایش شد");
+      }
+
+      onSuccess?.();
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message || "خطا در ثبت بارنامه";
+      toast.error(message);
+    }
+  }, [mode, waybill?.id, createWaybill, updateWaybill, reset, onSuccess]);
+
+  const isPending = createWaybill.isPending || updateWaybill.isPending || isSubmitting;
+
+  const errorNames = Object.keys(errors);
+  const errorCount = errorNames.length;
+
+  useEffect(() => {
+    if (submitAttempted && errorCount === 0) {
+      setSubmitAttempted(false);
+    }
+  }, [errors, submitAttempted, errorCount]);
+
+  const selectedDriver = drivers?.results?.find((d: DriverResponse) => d.id === Number(selectedDriverId));
   const isVehicleFixed = !!selectedDriver?.vehicle_id;
 
   return (
     <>
       <Form {...form}>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6"
-        >
-          {/* Basic Info */}
-          <FormInput
-            control={control}
-            name="waybill_number"
-            label="شماره بارنامه"
-            error={errors.waybill_number?.message}
-          />
-          <FormJalaliDatePicker
-            outputType="iso"
-            control={control}
-            name="issue_date"
-            label="تاریخ صدور"
-          />
-          <FormJalaliDatePicker
-            outputType="iso"
-            control={control}
-            name="dispatch_date"
-            label="تاریخ بارگیری"
-          />
-          <FormJalaliDatePicker
-            outputType="iso"
-            control={control}
-            name="actual_delivery_date"
-            label="تاریخ تحویل"
-          />
-          <FormInput
-            control={control}
-            name="status"
-            label="وضعیت"
-            placeholder="در انتظار / در مسیر / تحویل شده"
-            error={errors.status?.message}
-          />
-
-          {/* Entities */}
-          <FormCommandSelect
-            control={control}
-            searchValue={senderSearch}
-            onSearchChange={setSenderSearch}
-            name="sender_id"
-            label="فرستنده"
-            options={mapCustomerOptions(senders?.results ?? [])}
-            onAddNew={() => setSenderOpen(true)}
-            loading={sendersLoading}
-          />
-          <FormCommandSelect
-            control={control}
-            searchValue={receiverSearch}
-            onSearchChange={setReceiverSearch}
-            name="receiver_id"
-            label="گیرنده"
-            options={mapCustomerOptions(receivers?.results ?? [])}
-            onAddNew={() => setReceiverOpen(true)}
-            loading={receiversLoading}
-          />
-          <FormCommandSelect
-            control={control}
-            searchValue={driverSearch}
-            onSearchChange={setDriverSearch}
-            name="driver_id"
-            label="راننده"
-            options={mapDriverOptions(drivers?.results ?? [])}
-            onAddNew={() => setDriverOpen(true)}
-            loading={driversLoading}
-          />
-          <FormCommandSelect
-            control={control}
-            searchValue={vehicleSearch}
-            onSearchChange={setVehicleSearch}
-            name="vehicle_id"
-            label="وسیله نقلیه"
-            options={mapVehicleOptions(vehicles?.results ?? [])}
-            onAddNew={() => setVehicleOpen(true)}
-            loading={vehiclesLoading}
-            disabled={isVehicleFixed}
-          />
-          <FormCommandSelect
-            control={control}
-            searchValue={originSearch}
-            onSearchChange={setOriginSearch}
-            name="origin_location_id"
-            label="مبدا"
-            options={mapLocationOptions(locations ?? [])}
-            onAddNew={() => setOriginOpen(true)}
-            loading={locationsLoading}
-          />
-          <FormCommandSelect
-            control={control}
-            searchValue={destSearch}
-            onSearchChange={setDestSearch}
-            name="destination_location_id"
-            label="مقصد"
-            options={mapLocationOptions(locations ?? [])}
-            onAddNew={() => setDestOpen(true)}
-            loading={locationsLoading}
-          />
-
-          {/* Cargo details */}
-          <FormInput
-            control={control}
-            name="total_weight"
-            label="وزن کل (کیلوگرم)"
-            type="number"
-            error={errors.total_weight?.message}
-          />
-          <FormInput
-            control={control}
-            name="total_packages"
-            label="تعداد بسته‌ها"
-            type="number"
-            error={errors.total_packages?.message}
-          />
-          <FormInput
-            control={control}
-            name="description"
-            label="شرح محموله"
-            error={errors.description?.message}
-          />
-
-          {/* Financial section */}
-          <FormInput
-            control={control}
-            name="freight_charge"
-            label="کرایه حمل"
-            type="number"
-            error={errors.freight_charge?.message}
-          />
-          <div className="col-span-full">
-            <FormCheckbox
-              control={control}
-              name="have_insurance"
-              label="دارای بیمه نامه"
-            />
-          </div>
-          {haveInsurance && (
-            <FormInput
-              control={control}
-              name="insurance_amount"
-              label="مبلغ بیمه"
-              type="number"
-              error={errors.insurance_amount?.message}
-            />
+        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
+          {submitAttempted && errorCount > 0 && (
+            <Alert variant="destructive" className="animate-in slide-in-from-top-2">
+              <AlertDescription className="space-y-1">
+                <p>{errorCount} مورد نیاز به اصلاح دارد:</p>
+                <ul className="list-disc pr-5 text-sm" dir="rtl">
+                  {errorNames.slice(0, 4).map((key) => (
+                    <li key={key}>{fieldLabels[key] || key}</li>
+                  ))}
+                  {errorCount > 4 && <li>و {errorCount - 4} مورد دیگر...</li>}
+                </ul>
+              </AlertDescription>
+            </Alert>
           )}
-          <FormInput
+
+          <BasicInfoSection control={control} errors={errors} />
+
+          <EntitiesSection
             control={control}
-            name="other_charges"
-            label="سایر هزینه‌ها"
-            type="number"
-            error={errors.other_charges?.message}
-          />
-          <FormInput
-            control={control}
-            name="payment_status"
-            label="وضعیت پرداخت"
-            error={errors.payment_status?.message}
-          />
-          <FormInput
-            control={control}
-            name="notes"
-            label="یادداشت"
-            error={errors.notes?.message}
+            errors={errors}
+            senderSearch={senderSearch}
+            setSenderSearch={setSenderSearch}
+            senders={senders}
+            sendersLoading={sendersLoading}
+            setSenderOpen={setSenderOpen}
+            receiverSearch={receiverSearch}
+            setReceiverSearch={setReceiverSearch}
+            receivers={receivers}
+            receiversLoading={receiversLoading}
+            setReceiverOpen={setReceiverOpen}
+            driverSearch={driverSearch}
+            setDriverSearch={setDriverSearch}
+            drivers={drivers}
+            driversLoading={driversLoading}
+            setDriverOpen={setDriverOpen}
+            vehicleSearch={vehicleSearch}
+            setVehicleSearch={setVehicleSearch}
+            vehicles={vehicles}
+            vehiclesLoading={vehiclesLoading}
+            setVehicleOpen={setVehicleOpen}
+            isVehicleFixed={isVehicleFixed}
+            originSearch={originSearch}
+            setOriginSearch={setOriginSearch}
+            originLocations={originLocations}
+            originLoading={originLoading}
+            setOriginOpen={setOriginOpen}
+            destSearch={destSearch}
+            setDestSearch={setDestSearch}
+            destLocations={destLocations}
+            destLoading={destLoading}
+            setDestOpen={setDestOpen}
           />
 
-          <div className="col-span-full">
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? (
-                <Spinner />
-              ) : mode === "create" ? (
-                "ثبت بارنامه"
-              ) : (
-                "ویرایش بارنامه"
-              )}
-            </Button>
-          </div>
+          <CargoSection control={control} errors={errors} />
+          <FinancialSection control={control} errors={errors} haveInsurance={haveInsurance} />
+
+          <Separator />
+
+          <Button type="submit" className="w-full" size="lg" disabled={isPending}>
+            {isPending ? (
+              <>
+                <Spinner className="ml-2" />
+                در حال ذخیره...
+              </>
+            ) : mode === "create" ? (
+              "ثبت بارنامه"
+            ) : (
+              "به‌روزرسانی بارنامه"
+            )}
+          </Button>
         </form>
       </Form>
 
-      {/* Modals */}
-      <CreateCustomerModal
-        open={senderOpen}
-        onOpenChange={setSenderOpen}
-        shouldNavigate={false}
-      />
-      <CreateCustomerModal
-        open={receiverOpen}
-        onOpenChange={setReceiverOpen}
-        shouldNavigate={false}
-      />
-      <CreateDriverModal
-        open={driverOpen}
-        onOpenChange={setDriverOpen}
-        shouldNavigate={false}
-      />
-      <CreateVehicleModal
-        open={vehicleOpen}
-        onOpenChange={setVehicleOpen}
-        shouldNavigate={false}
-      />
-      <CreateLocationModal
-        open={originOpen}
-        onOpenChange={setOriginOpen}
-        shouldNavigate={false}
-      />
-      <CreateLocationModal
-        open={destOpen}
-        onOpenChange={setDestOpen}
-        shouldNavigate={false}
-      />
+      <CreateCustomerModal open={senderOpen} onOpenChange={setSenderOpen} shouldNavigate={false} />
+      <CreateCustomerModal open={receiverOpen} onOpenChange={setReceiverOpen} shouldNavigate={false} />
+      <CreateDriverModal open={driverOpen} onOpenChange={setDriverOpen} shouldNavigate={false} />
+      <CreateVehicleModal open={vehicleOpen} onOpenChange={setVehicleOpen} shouldNavigate={false} />
+      <CreateLocationModal open={originOpen} onOpenChange={setOriginOpen} shouldNavigate={false} />
+      <CreateLocationModal open={destOpen} onOpenChange={setDestOpen} shouldNavigate={false} />
     </>
   );
 }

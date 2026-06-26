@@ -22,6 +22,7 @@ interface FormInputProps<T extends FieldValues> {
   icon?: ReactNode;
   placeholder?: string;
   type?: React.InputHTMLAttributes<HTMLInputElement>["type"];
+  step?: string;
   disabled?: boolean;
   className?: string;
 }
@@ -34,6 +35,7 @@ export function FormInput<T extends FieldValues>({
   icon,
   placeholder,
   type = "text",
+  step,
   disabled,
   className,
 }: FormInputProps<T>) {
@@ -58,6 +60,7 @@ export function FormInput<T extends FieldValues>({
                 {...field}
                 value={field.value ?? ""}
                 type={type}
+                step={step}
                 placeholder={placeholder}
                 disabled={disabled}
               />

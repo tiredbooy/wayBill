@@ -35,7 +35,9 @@ interface FormCommandSelectProps<T extends FieldValues> {
   onSearchChange?: (search: string) => void;
   onAddNew?: (search: string) => void;
   loading?: boolean;
-  disabled?: boolean; // 👈 new prop
+  disabled?: boolean;
+  placeholder?: string;
+  error?: string;
 }
 
 export function FormCommandSelect<T extends FieldValues>({
@@ -47,7 +49,9 @@ export function FormCommandSelect<T extends FieldValues>({
   onSearchChange,
   onAddNew,
   loading = false,
-  disabled = false, // 👈 default false
+  disabled = false,
+  placeholder,
+  error,
 }: FormCommandSelectProps<T>) {
   const [open, setOpen] = useState(false);
 
@@ -64,7 +68,11 @@ export function FormCommandSelect<T extends FieldValues>({
             <PopoverTrigger asChild disabled={isDisabled}>
               <Button
                 variant="outline"
-                className="w-full justify-between"
+                className={cn(
+                  "w-full justify-between font-normal",
+                  !field.value && "text-muted-foreground",
+                  error && "border-destructive",
+                )}
                 disabled={isDisabled}
               >
                 {loading ? (
@@ -72,12 +80,9 @@ export function FormCommandSelect<T extends FieldValues>({
                     <Loader2 className="ml-2 h-4 w-4 animate-spin" />
                     در حال بارگذاری...
                   </>
-                ) : disabled ? (
-                  (options?.find((o) => o.value === field.value)?.label ??
-                  "انتخاب کنید")
                 ) : (
-                  (options?.find((o) => o.value === field.value)?.label ??
-                  "انتخاب کنید")
+                  options?.find((o) => o.value === field.value)?.label ??
+                    placeholder ?? "انتخاب کنید"
                 )}
               </Button>
             </PopoverTrigger>
@@ -126,6 +131,7 @@ export function FormCommandSelect<T extends FieldValues>({
               </PopoverContent>
             )}
           </Popover>
+          {error && <p className="text-destructive text-sm">{error}</p>}
         </div>
       )}
     />
