@@ -6,81 +6,42 @@ import {
   mapVehicleOptions,
   mapLocationOptions,
 } from "./schema";
+import { toItems } from "@/hooks/use-entity-picker";
 import type { CustomerDetail } from "@/_libs/types/customer-types";
 import type { DriverResponse } from "@/_libs/types/driver-types";
 import type { VehicleResponse } from "@/_libs/types/vehicle-types";
 import type { LocationDetail } from "@/_libs/types/location-types";
 
+interface PickerBundle {
+  search: string;
+  setSearch: (value: string) => void;
+  setModalOpen: (value: boolean) => void;
+  data: unknown;
+  loading: boolean;
+}
+
 interface EntitiesSectionProps {
   control: any;
   errors: any;
-  senderSearch: string;
-  setSenderSearch: (value: string) => void;
-  senders: { results?: CustomerDetail[] } | undefined;
-  sendersLoading: boolean;
-  setSenderOpen: (value: boolean) => void;
-  receiverSearch: string;
-  setReceiverSearch: (value: string) => void;
-  receivers: { results?: CustomerDetail[] } | undefined;
-  receiversLoading: boolean;
-  setReceiverOpen: (value: boolean) => void;
-  driverSearch: string;
-  setDriverSearch: (value: string) => void;
-  drivers: { results?: DriverResponse[] } | undefined;
-  driversLoading: boolean;
-  setDriverOpen: (value: boolean) => void;
-  vehicleSearch: string;
-  setVehicleSearch: (value: string) => void;
-  vehicles: { results?: VehicleResponse[] } | undefined;
-  vehiclesLoading: boolean;
+  sender: PickerBundle;
+  receiver: PickerBundle;
+  driver: PickerBundle;
+  vehicle: PickerBundle;
+  origin: PickerBundle;
+  destination: PickerBundle;
   isVehicleFixed: boolean;
-  setVehicleOpen: (value: boolean) => void;
-  originSearch: string;
-  setOriginSearch: (value: string) => void;
-  originLocations: LocationDetail[] | undefined;
-  originLoading: boolean;
-  setOriginOpen: (value: boolean) => void;
-  destSearch: string;
-  setDestSearch: (value: string) => void;
-  destLocations: LocationDetail[] | undefined;
-  destLoading: boolean;
-  setDestOpen: (value: boolean) => void;
 }
 
 export function EntitiesSection({
   control,
   errors,
-  senderSearch,
-  setSenderSearch,
-  senders,
-  sendersLoading,
-  setSenderOpen,
-  receiverSearch,
-  setReceiverSearch,
-  receivers,
-  receiversLoading,
-  setReceiverOpen,
-  driverSearch,
-  setDriverSearch,
-  drivers,
-  driversLoading,
-  setDriverOpen,
-  vehicleSearch,
-  setVehicleSearch,
-  vehicles,
-  vehiclesLoading,
-  setVehicleOpen,
+  sender,
+  receiver,
+  driver,
+  vehicle,
+  origin,
+  destination,
   isVehicleFixed,
-  originSearch,
-  setOriginSearch,
-  originLocations,
-  originLoading,
-  setOriginOpen,
-  destSearch,
-  setDestSearch,
-  destLocations,
-  destLoading,
-  setDestOpen,
 }: EntitiesSectionProps) {
   return (
     <Card>
@@ -92,11 +53,11 @@ export function EntitiesSection({
           control={control}
           name="sender_id"
           label="فرستنده"
-          searchValue={senderSearch}
-          onSearchChange={setSenderSearch}
-          options={mapCustomerOptions(senders?.results)}
-          onAddNew={() => setSenderOpen(true)}
-          loading={sendersLoading}
+          searchValue={sender.search}
+          onSearchChange={sender.setSearch}
+          options={mapCustomerOptions(toItems<CustomerDetail>(sender.data))}
+          onAddNew={() => sender.setModalOpen(true)}
+          loading={sender.loading}
           error={errors.sender_id?.message}
         />
 
@@ -104,11 +65,11 @@ export function EntitiesSection({
           control={control}
           name="receiver_id"
           label="گیرنده"
-          searchValue={receiverSearch}
-          onSearchChange={setReceiverSearch}
-          options={mapCustomerOptions(receivers?.results)}
-          onAddNew={() => setReceiverOpen(true)}
-          loading={receiversLoading}
+          searchValue={receiver.search}
+          onSearchChange={receiver.setSearch}
+          options={mapCustomerOptions(toItems<CustomerDetail>(receiver.data))}
+          onAddNew={() => receiver.setModalOpen(true)}
+          loading={receiver.loading}
           error={errors.receiver_id?.message}
         />
 
@@ -116,11 +77,11 @@ export function EntitiesSection({
           control={control}
           name="driver_id"
           label="راننده"
-          searchValue={driverSearch}
-          onSearchChange={setDriverSearch}
-          options={mapDriverOptions(drivers?.results)}
-          onAddNew={() => setDriverOpen(true)}
-          loading={driversLoading}
+          searchValue={driver.search}
+          onSearchChange={driver.setSearch}
+          options={mapDriverOptions(toItems<DriverResponse>(driver.data))}
+          onAddNew={() => driver.setModalOpen(true)}
+          loading={driver.loading}
           error={errors.driver_id?.message}
         />
 
@@ -128,13 +89,17 @@ export function EntitiesSection({
           control={control}
           name="vehicle_id"
           label="وسیله نقلیه"
-          searchValue={vehicleSearch}
-          onSearchChange={setVehicleSearch}
-          options={mapVehicleOptions(vehicles?.results)}
-          onAddNew={() => setVehicleOpen(true)}
-          loading={vehiclesLoading}
+          searchValue={vehicle.search}
+          onSearchChange={vehicle.setSearch}
+          options={mapVehicleOptions(toItems<VehicleResponse>(vehicle.data))}
+          onAddNew={() => vehicle.setModalOpen(true)}
+          loading={vehicle.loading}
           disabled={isVehicleFixed}
-          placeholder={isVehicleFixed ? "خودکار بر اساس راننده انتخاب شد" : "وسیله نقلیه را انتخاب کنید"}
+          placeholder={
+            isVehicleFixed
+              ? "خودکار بر اساس راننده انتخاب شد"
+              : "وسیله نقلیه را انتخاب کنید"
+          }
           error={errors.vehicle_id?.message}
         />
 
@@ -142,11 +107,11 @@ export function EntitiesSection({
           control={control}
           name="origin_location_id"
           label="مبدا"
-          searchValue={originSearch}
-          onSearchChange={setOriginSearch}
-          options={mapLocationOptions(originLocations)}
-          onAddNew={() => setOriginOpen(true)}
-          loading={originLoading}
+          searchValue={origin.search}
+          onSearchChange={origin.setSearch}
+          options={mapLocationOptions(toItems<LocationDetail>(origin.data))}
+          onAddNew={() => origin.setModalOpen(true)}
+          loading={origin.loading}
           error={errors.origin_location_id?.message}
         />
 
@@ -154,11 +119,13 @@ export function EntitiesSection({
           control={control}
           name="destination_location_id"
           label="مقصد"
-          searchValue={destSearch}
-          onSearchChange={setDestSearch}
-          options={mapLocationOptions(destLocations)}
-          onAddNew={() => setDestOpen(true)}
-          loading={destLoading}
+          searchValue={destination.search}
+          onSearchChange={destination.setSearch}
+          options={mapLocationOptions(
+            toItems<LocationDetail>(destination.data),
+          )}
+          onAddNew={() => destination.setModalOpen(true)}
+          loading={destination.loading}
           error={errors.destination_location_id?.message}
         />
       </CardContent>

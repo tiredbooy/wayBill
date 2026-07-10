@@ -60,7 +60,6 @@ func (h *WaybillHandler) GetWaybill(c *gin.Context) {
 }
 
 func (h *WaybillHandler) GetWaybills(c *gin.Context) {
-
 	filters := models.WaybillFilters{
 		Page:          int64(utils.ParseIntOrDefault(c.Query("page"), 1)),
 		Limit:         int64(utils.ParseIntOrDefault(c.Query("limit"), 12)),
@@ -75,20 +74,26 @@ func (h *WaybillHandler) GetWaybills(c *gin.Context) {
 	}
 
 	if from := c.Query("from"); from != "" {
-		if t, err := time.Parse("2006-01-02", from); err != nil {
-			filters.From = &t
+		t, err := time.Parse("2006-01-02", from)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "فرمت تاریخ 'از' نامعتبر است"})
+			return
 		}
+		filters.From = &t
 	}
 
 	if to := c.Query("to"); to != "" {
-		if t, err := time.Parse("2006-01-02", to); err != nil {
-			filters.To = &t
+		t, err := time.Parse("2006-01-02", to)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "فرمت تاریخ 'تا' نامعتبر است"})
+			return
 		}
+		filters.To = &t
 	}
 
 	waybills, err := h.waybillService.GetAllWaybills(c.Request.Context(), filters)
 	if err != nil {
-		c.JSON(apperr.HTTPStatus(err), apperr.Message(err))
+		c.JSON(apperr.HTTPStatus(err), gin.H{"error": apperr.Message(err)})
 		return
 	}
 
@@ -103,19 +108,17 @@ func (h *WaybillHandler) UpdateWaybill(c *gin.Context) {
 	}
 
 	var req models.UpdateWaybillReq
-
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "خطا: داده‌های ورودی نامعتبر است."})
 		return
 	}
 
-	err = h.waybillService.UpdateWybill(c.Request.Context(), waybillID, req)
-	if err != nil {
-		c.JSON(apperr.HTTPStatus(err), apperr.Message(err))
+	if err := h.waybillService.UpdateWybill(c.Request.Context(), waybillID, req); err != nil {
+		c.JSON(apperr.HTTPStatus(err), gin.H{"error": apperr.Message(err)})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "وسیله نقلیه با موفقیت ویرایش شد."})
+	c.JSON(http.StatusOK, gin.H{"message": "بارنامه با موفقیت ویرایش شد."})
 }
 
 func (h *WaybillHandler) DeleteWaybill(c *gin.Context) {

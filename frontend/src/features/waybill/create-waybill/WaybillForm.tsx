@@ -1,6 +1,11 @@
-import { useForm, type FieldErrors, type SubmitHandler, type SubmitErrorHandler } from "react-hook-form";
+import {
+  useForm,
+  type FieldErrors,
+  type SubmitHandler,
+  type SubmitErrorHandler,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 
 import {
@@ -22,6 +27,7 @@ import { BasicInfoSection } from "./BasicInfoSection";
 import { EntitiesSection } from "./EntitiesSection";
 import { CargoSection } from "./CargoSection";
 import { FinancialSection } from "./FinancialSection";
+import { useEntityPicker, toItems } from "@/hooks/use-entity-picker";
 
 import CreateCustomerModal from "@/features/customers/create-customer/CreateCustomerModal";
 import CreateDriverModal from "@/features/drivers/create-driver/CreateDriverModal";
@@ -63,32 +69,37 @@ const fieldLabels: Record<string, string> = {
 export function WaybillForm({ mode = "create", waybill, onSuccess }: Props) {
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
-  const [senderSearch, setSenderSearch] = useState("");
-  const [receiverSearch, setReceiverSearch] = useState("");
-  const [driverSearch, setDriverSearch] = useState("");
-  const [vehicleSearch, setVehicleSearch] = useState("");
-  const [originSearch, setOriginSearch] = useState("");
-  const [destSearch, setDestSearch] = useState("");
+  const sender = useEntityPicker();
+  const receiver = useEntityPicker();
+  const driver = useEntityPicker();
+  const vehicle = useEntityPicker();
+  const origin = useEntityPicker();
+  const destination = useEntityPicker();
 
-  const [senderOpen, setSenderOpen] = useState(false);
-  const [receiverOpen, setReceiverOpen] = useState(false);
-  const [driverOpen, setDriverOpen] = useState(false);
-  const [vehicleOpen, setVehicleOpen] = useState(false);
-  const [originOpen, setOriginOpen] = useState(false);
-  const [destOpen, setDestOpen] = useState(false);
-
-  const { data: senders, isLoading: sendersLoading } = useCustomers({ q: senderSearch });
-  const { data: receivers, isLoading: receiversLoading } = useCustomers({ q: receiverSearch });
-  const { data: drivers, isLoading: driversLoading } = useDrivers({ q: driverSearch });
-  const { data: vehicles, isLoading: vehiclesLoading } = useVehicles({ q: vehicleSearch });
-  const { data: originLocations, isLoading: originLoading } = useLocations({ q: originSearch });
-  const { data: destLocations, isLoading: destLoading } = useLocations({ q: destSearch });
+  const { data: senders, isLoading: sendersLoading } = useCustomers({
+    q: sender.search,
+  });
+  const { data: receivers, isLoading: receiversLoading } = useCustomers({
+    q: receiver.search,
+  });
+  const { data: drivers, isLoading: driversLoading } = useDrivers({
+    q: driver.search,
+  });
+  const { data: vehicles, isLoading: vehiclesLoading } = useVehicles({
+    q: vehicle.search,
+  });
+  const { data: originLocations, isLoading: originLoading } = useLocations({
+    q: origin.search,
+  });
+  const { data: destLocations, isLoading: destLoading } = useLocations({
+    q: destination.search,
+  });
 
   const createWaybill = useCreateWaybill();
   const updateWaybill = useUpdateWaybill();
 
   const form = useForm<WaybillFormValues>({
-    resolver: zodResolver(waybillSchema) as any,
+    resolver: zodResolver(waybillSchema),
     defaultValues: {
       waybill_number: waybill?.waybill_number ?? "",
       issue_date: waybill?.issue_date ?? "",
@@ -99,17 +110,27 @@ export function WaybillForm({ mode = "create", waybill, onSuccess }: Props) {
       receiver_id: waybill?.receiver_id ? String(waybill.receiver_id) : "",
       driver_id: waybill?.driver_id ? String(waybill.driver_id) : "",
       vehicle_id: waybill?.vehicle_id ? String(waybill.vehicle_id) : "",
-      origin_location_id: waybill?.origin_location_id ? String(waybill.origin_location_id) : "",
+      origin_location_id: waybill?.origin_location_id
+        ? String(waybill.origin_location_id)
+        : "",
       destination_location_id: waybill?.destination_location_id
         ? String(waybill.destination_location_id)
         : "",
       total_weight: waybill?.total_weight ? String(waybill.total_weight) : "",
-      total_packages: waybill?.total_packages ? String(waybill.total_packages) : "",
+      total_packages: waybill?.total_packages
+        ? String(waybill.total_packages)
+        : "",
       description: waybill?.description ?? "",
-      freight_charge: waybill?.freight_charge ? String(waybill.freight_charge) : "",
+      freight_charge: waybill?.freight_charge
+        ? String(waybill.freight_charge)
+        : "",
       have_insurance: waybill?.have_insurance ?? false,
-      insurance_amount: waybill?.insurance_amount ? String(waybill.insurance_amount) : "",
-      other_charges: waybill?.other_charges ? String(waybill.other_charges) : "",
+      insurance_amount: waybill?.insurance_amount
+        ? String(waybill.insurance_amount)
+        : "",
+      other_charges: waybill?.other_charges
+        ? String(waybill.other_charges)
+        : "",
       payment_status: waybill?.payment_status ?? "",
       notes: waybill?.notes ?? "",
     },
@@ -128,70 +149,121 @@ export function WaybillForm({ mode = "create", waybill, onSuccess }: Props) {
   const haveInsurance = watch("have_insurance");
   const selectedDriverId = watch("driver_id");
 
+  // Only auto-fill vehicle_id the first time a given driver is selected,
+  // not every time the drivers list refetches (e.g. while typing a search).
+  const lastAppliedDriverId = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!selectedDriverId || !drivers?.results?.length) return;
+    if (!selectedDriverId || selectedDriverId === lastAppliedDriverId.current)
+      return;
 
-    const driver = drivers.results.find((d: DriverResponse) => d.id === Number(selectedDriverId));
-    if (driver?.vehicle_id) {
-      setValue("vehicle_id", String(driver.vehicle_id), { shouldValidate: true, shouldDirty: true });
+    const driverList = toItems<DriverResponse>(drivers);
+    const selected = driverList.find((d) => d.id === Number(selectedDriverId));
+    if (selected?.vehicle_id) {
+      setValue("vehicle_id", String(selected.vehicle_id), {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      lastAppliedDriverId.current = selectedDriverId;
     }
-  }, [selectedDriverId, drivers?.results, setValue]);
+  }, [selectedDriverId, drivers, setValue]);
 
-  const scrollAndFocus = useCallback((errs: FieldErrors<WaybillFormValues>) => {
-    const firstKey = Object.keys(errs)[0] as keyof WaybillFormValues;
-    if (firstKey) {
-      setTimeout(() => setFocus(firstKey), 150);
-    }
-  }, [setFocus]);
-
-  const onInvalid: SubmitErrorHandler<WaybillFormValues> = useCallback((errs) => {
-    setSubmitAttempted(true);
-    scrollAndFocus(errs);
-  }, [scrollAndFocus]);
-
-  const onSubmit: SubmitHandler<WaybillFormValues> = useCallback(async (data) => {
-    setSubmitAttempted(false);
-    try {
-      const payload = {
-        waybill_number: data.waybill_number || undefined,
-        issue_date: data.issue_date || undefined,
-        dispatch_date: data.dispatch_date || undefined,
-        actual_delivery_date: data.actual_delivery_date || undefined,
-        status: data.status || undefined,
-        sender_id: Number(data.sender_id),
-        receiver_id: Number(data.receiver_id),
-        driver_id: Number(data.driver_id),
-        vehicle_id: Number(data.vehicle_id),
-        origin_location_id: Number(data.origin_location_id),
-        destination_location_id: Number(data.destination_location_id),
-        total_weight: data.total_weight ? parseFloat(data.total_weight) : undefined,
-        total_packages: data.total_packages ? parseInt(data.total_packages) : undefined,
-        description: data.description || undefined,
-        freight_charge: data.freight_charge ? parseFloat(data.freight_charge) : undefined,
-        have_insurance: data.have_insurance,
-        insurance_amount: data.insurance_amount ? parseFloat(data.insurance_amount) : 0,
-        other_charges: data.other_charges ? parseFloat(data.other_charges) : undefined,
-        payment_status: data.payment_status || undefined,
-        notes: data.notes || undefined,
-      };
-
-      if (mode === "create") {
-        await createWaybill.mutateAsync(payload);
-        toast.success("بارنامه با موفقیت ایجاد شد");
-        reset();
-      } else if (waybill?.id) {
-        await updateWaybill.mutateAsync({ data: payload, waybillId: waybill.id });
-        toast.success("بارنامه با موفقیت ویرایش شد");
+  const scrollAndFocus = useCallback(
+    (errs: FieldErrors<WaybillFormValues>) => {
+      const firstKey = Object.keys(errs)[0] as keyof WaybillFormValues;
+      if (firstKey) {
+        setTimeout(() => setFocus(firstKey), 150);
       }
+    },
+    [setFocus],
+  );
 
-      onSuccess?.();
-    } catch (err: any) {
-      const message = err?.response?.data?.message || err?.message || "خطا در ثبت بارنامه";
-      toast.error(message);
-    }
-  }, [mode, waybill?.id, createWaybill, updateWaybill, reset, onSuccess]);
+  const onInvalid: SubmitErrorHandler<WaybillFormValues> = useCallback(
+    (errs) => {
+      setSubmitAttempted(true);
+      scrollAndFocus(errs);
+    },
+    [scrollAndFocus],
+  );
 
-  const isPending = createWaybill.isPending || updateWaybill.isPending || isSubmitting;
+  const resetPickerState = useCallback(() => {
+    [sender, receiver, driver, vehicle, origin, destination].forEach((p) => {
+      p.setSearch("");
+    });
+    lastAppliedDriverId.current = null;
+  }, [sender, receiver, driver, vehicle, origin, destination]);
+
+  const onSubmit: SubmitHandler<WaybillFormValues> = useCallback(
+    async (data) => {
+      setSubmitAttempted(false);
+      try {
+        const payload = {
+          waybill_number: data.waybill_number || undefined,
+          issue_date: data.issue_date || undefined,
+          dispatch_date: data.dispatch_date || undefined,
+          actual_delivery_date: data.actual_delivery_date || undefined,
+          status: data.status || undefined,
+          sender_id: Number(data.sender_id),
+          receiver_id: Number(data.receiver_id),
+          driver_id: Number(data.driver_id),
+          vehicle_id: Number(data.vehicle_id),
+          origin_location_id: Number(data.origin_location_id),
+          destination_location_id: Number(data.destination_location_id),
+          total_weight: data.total_weight
+            ? parseFloat(data.total_weight)
+            : undefined,
+          total_packages: data.total_packages
+            ? parseInt(data.total_packages)
+            : undefined,
+          description: data.description || undefined,
+          freight_charge: data.freight_charge
+            ? parseFloat(data.freight_charge)
+            : undefined,
+          have_insurance: data.have_insurance,
+          // FinancialSection now clears insurance_amount whenever have_insurance
+          // is false, so this no longer needs a manual ": 0" fallback.
+          insurance_amount: data.insurance_amount
+            ? parseFloat(data.insurance_amount)
+            : undefined,
+          other_charges: data.other_charges
+            ? parseFloat(data.other_charges)
+            : undefined,
+          payment_status: data.payment_status || undefined,
+          notes: data.notes || undefined,
+        };
+
+        if (mode === "create") {
+          await createWaybill.mutateAsync(payload);
+          toast.success("بارنامه با موفقیت ایجاد شد");
+          reset();
+          resetPickerState();
+        } else if (waybill?.id) {
+          await updateWaybill.mutateAsync({
+            data: payload,
+            waybillId: waybill.id,
+          });
+          toast.success("بارنامه با موفقیت ویرایش شد");
+        }
+
+        onSuccess?.();
+      } catch (err: any) {
+        const message = err?.message || "خطا در ثبت بارنامه";
+        toast.error(message);
+      }
+    },
+    [
+      mode,
+      waybill?.id,
+      createWaybill,
+      updateWaybill,
+      reset,
+      resetPickerState,
+      onSuccess,
+    ],
+  );
+
+  const isPending =
+    createWaybill.isPending || updateWaybill.isPending || isSubmitting;
 
   const errorNames = Object.keys(errors);
   const errorCount = errorNames.length;
@@ -202,15 +274,23 @@ export function WaybillForm({ mode = "create", waybill, onSuccess }: Props) {
     }
   }, [errors, submitAttempted, errorCount]);
 
-  const selectedDriver = drivers?.results?.find((d: DriverResponse) => d.id === Number(selectedDriverId));
+  const selectedDriver = toItems<DriverResponse>(drivers).find(
+    (d) => d.id === Number(selectedDriverId),
+  );
   const isVehicleFixed = !!selectedDriver?.vehicle_id;
 
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-8">
+        <form
+          onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+          className="space-y-8"
+        >
           {submitAttempted && errorCount > 0 && (
-            <Alert variant="destructive" className="animate-in slide-in-from-top-2">
+            <Alert
+              variant="destructive"
+              className="animate-in slide-in-from-top-2"
+            >
               <AlertDescription className="space-y-1">
                 <p>{errorCount} مورد نیاز به اصلاح دارد:</p>
                 <ul className="list-disc pr-5 text-sm" dir="rtl">
@@ -228,45 +308,42 @@ export function WaybillForm({ mode = "create", waybill, onSuccess }: Props) {
           <EntitiesSection
             control={control}
             errors={errors}
-            senderSearch={senderSearch}
-            setSenderSearch={setSenderSearch}
-            senders={senders}
-            sendersLoading={sendersLoading}
-            setSenderOpen={setSenderOpen}
-            receiverSearch={receiverSearch}
-            setReceiverSearch={setReceiverSearch}
-            receivers={receivers}
-            receiversLoading={receiversLoading}
-            setReceiverOpen={setReceiverOpen}
-            driverSearch={driverSearch}
-            setDriverSearch={setDriverSearch}
-            drivers={drivers}
-            driversLoading={driversLoading}
-            setDriverOpen={setDriverOpen}
-            vehicleSearch={vehicleSearch}
-            setVehicleSearch={setVehicleSearch}
-            vehicles={vehicles}
-            vehiclesLoading={vehiclesLoading}
-            setVehicleOpen={setVehicleOpen}
+            sender={{ ...sender, data: senders, loading: sendersLoading }}
+            receiver={{
+              ...receiver,
+              data: receivers,
+              loading: receiversLoading,
+            }}
+            driver={{ ...driver, data: drivers, loading: driversLoading }}
+            vehicle={{ ...vehicle, data: vehicles, loading: vehiclesLoading }}
+            origin={{
+              ...origin,
+              data: originLocations,
+              loading: originLoading,
+            }}
+            destination={{
+              ...destination,
+              data: destLocations,
+              loading: destLoading,
+            }}
             isVehicleFixed={isVehicleFixed}
-            originSearch={originSearch}
-            setOriginSearch={setOriginSearch}
-            originLocations={originLocations}
-            originLoading={originLoading}
-            setOriginOpen={setOriginOpen}
-            destSearch={destSearch}
-            setDestSearch={setDestSearch}
-            destLocations={destLocations}
-            destLoading={destLoading}
-            setDestOpen={setDestOpen}
           />
 
           <CargoSection control={control} errors={errors} />
-          <FinancialSection control={control} errors={errors} haveInsurance={haveInsurance} />
+          <FinancialSection
+            control={control}
+            errors={errors}
+            haveInsurance={haveInsurance}
+          />
 
           <Separator />
 
-          <Button type="submit" className="w-full" size="lg" disabled={isPending}>
+          <Button
+            type="submit"
+            className="w-full"
+            size="lg"
+            disabled={isPending}
+          >
             {isPending ? (
               <>
                 <Spinner className="ml-2" />
@@ -281,12 +358,36 @@ export function WaybillForm({ mode = "create", waybill, onSuccess }: Props) {
         </form>
       </Form>
 
-      <CreateCustomerModal open={senderOpen} onOpenChange={setSenderOpen} shouldNavigate={false} />
-      <CreateCustomerModal open={receiverOpen} onOpenChange={setReceiverOpen} shouldNavigate={false} />
-      <CreateDriverModal open={driverOpen} onOpenChange={setDriverOpen} shouldNavigate={false} />
-      <CreateVehicleModal open={vehicleOpen} onOpenChange={setVehicleOpen} shouldNavigate={false} />
-      <CreateLocationModal open={originOpen} onOpenChange={setOriginOpen} shouldNavigate={false} />
-      <CreateLocationModal open={destOpen} onOpenChange={setDestOpen} shouldNavigate={false} />
+      <CreateCustomerModal
+        open={sender.modalOpen}
+        onOpenChange={sender.setModalOpen}
+        shouldNavigate={false}
+      />
+      <CreateCustomerModal
+        open={receiver.modalOpen}
+        onOpenChange={receiver.setModalOpen}
+        shouldNavigate={false}
+      />
+      <CreateDriverModal
+        open={driver.modalOpen}
+        onOpenChange={driver.setModalOpen}
+        shouldNavigate={false}
+      />
+      <CreateVehicleModal
+        open={vehicle.modalOpen}
+        onOpenChange={vehicle.setModalOpen}
+        shouldNavigate={false}
+      />
+      <CreateLocationModal
+        open={origin.modalOpen}
+        onOpenChange={origin.setModalOpen}
+        shouldNavigate={false}
+      />
+      <CreateLocationModal
+        open={destination.modalOpen}
+        onOpenChange={destination.setModalOpen}
+        shouldNavigate={false}
+      />
     </>
   );
 }

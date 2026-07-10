@@ -4,6 +4,14 @@ import type { DriverResponse } from "@/_libs/types/driver-types";
 import type { VehicleResponse } from "@/_libs/types/vehicle-types";
 import type { LocationDetail } from "@/_libs/types/location-types";
 
+const numericString = (label: string) =>
+  z
+    .string()
+    .optional()
+    .refine((v) => !v || (!isNaN(Number(v)) && Number(v) >= 0), {
+      message: `${label} باید عددی معتبر و مثبت باشد`,
+    });
+
 export const waybillSchema = z.object({
   waybill_number: z.string().optional(),
   issue_date: z.string().min(1, "تاریخ صدور الزامی است"),
@@ -16,24 +24,27 @@ export const waybillSchema = z.object({
   vehicle_id: z.string().min(1, "وسیله نقلیه الزامی است"),
   origin_location_id: z.string().min(1, "مبدا الزامی است"),
   destination_location_id: z.string().min(1, "مقصد الزامی است"),
-  total_weight: z.string().optional(),
-  total_packages: z.string().optional(),
+  total_weight: numericString("وزن کل"),
+  total_packages: numericString("تعداد بسته"),
   description: z.string().optional(),
-  freight_charge: z.string().optional(),
-  have_insurance: z.boolean().default(false),
-  insurance_amount: z.string().optional(),
-  other_charges: z.string().optional(),
+  freight_charge: numericString("کرایه حمل"),
+  have_insurance: z.boolean(),
+  insurance_amount: numericString("مبلغ بیمه"),
+  other_charges: numericString("سایر هزینه‌ها"),
   payment_status: z.string().optional(),
   notes: z.string().optional(),
 });
 
-export type WaybillFormValues = z.infer<typeof waybillSchema>;
+export type WaybillFormValues = z.input<typeof waybillSchema>;
 
 export const mapCustomerOptions = (data: CustomerDetail[] = []) =>
   data.map((c) => ({ label: c.name, value: String(c.id) }));
 
 export const mapDriverOptions = (data: DriverResponse[] = []) =>
-  data.map((d) => ({ label: `${d.first_name} ${d.last_name}`, value: String(d.id) }));
+  data.map((d) => ({
+    label: `${d.first_name} ${d.last_name}`,
+    value: String(d.id),
+  }));
 
 export const mapVehicleOptions = (data: VehicleResponse[] = []) =>
   data.map((v) => ({ label: v.model, value: String(v.id) }));

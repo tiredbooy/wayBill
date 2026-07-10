@@ -1,6 +1,9 @@
+import { useEffect } from "react";
+import { useFormContext } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormInput } from "@/features/reusable/form-inputs/FormInput";
 import { FormCheckbox } from "@/features/reusable/form-inputs/FormCheckbox";
+import type { WaybillFormValues } from "./schema";
 
 interface FinancialSectionProps {
   control: any;
@@ -8,7 +11,22 @@ interface FinancialSectionProps {
   haveInsurance: boolean;
 }
 
-export function FinancialSection({ control, errors, haveInsurance }: FinancialSectionProps) {
+export function FinancialSection({
+  control,
+  errors,
+  haveInsurance,
+}: FinancialSectionProps) {
+  const { setValue } = useFormContext<WaybillFormValues>();
+
+  useEffect(() => {
+    if (!haveInsurance) {
+      setValue("insurance_amount", "", {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [haveInsurance, setValue]);
+
   return (
     <Card>
       <CardHeader>
@@ -26,7 +44,11 @@ export function FinancialSection({ control, errors, haveInsurance }: FinancialSe
         />
 
         <div className="md:col-span-2">
-          <FormCheckbox control={control} name="have_insurance" label="دارای بیمه‌نامه" />
+          <FormCheckbox
+            control={control}
+            name="have_insurance"
+            label="دارای بیمه‌نامه"
+          />
         </div>
 
         {haveInsurance && (
@@ -50,7 +72,6 @@ export function FinancialSection({ control, errors, haveInsurance }: FinancialSe
           placeholder="0"
           error={errors.other_charges?.message}
         />
-
         <FormInput
           control={control}
           name="payment_status"
@@ -58,7 +79,6 @@ export function FinancialSection({ control, errors, haveInsurance }: FinancialSe
           placeholder="پرداخت شده / پرداخت نشده"
           error={errors.payment_status?.message}
         />
-
         <FormInput
           control={control}
           name="notes"

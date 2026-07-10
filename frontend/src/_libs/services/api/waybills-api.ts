@@ -11,6 +11,51 @@ import { getToken } from "@/_libs/auth/auth";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+/**
+ * Safely parses a fetch Response as JSON.
+ * Prevents "Unexpected end of JSON input" crashes when the server
+ * (or a proxy in between) returns an empty body.
+ */
+async function parseJSON<T>(res: Response): Promise<T> {
+  const text = await res.text();
+  if (!text) {
+    throw new Error(
+      res.ok
+        ? "پاسخ سرور خالی بود."
+        : `خطای سرور (کد ${res.status}) بدون پیام مشخص.`,
+    );
+  }
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new Error("پاسخ سرور معتبر نبود.");
+  }
+}
+
+async function request<T>(
+  url: string,
+  init: RequestInit,
+  okStatus?: number,
+): Promise<T> {
+  const token = await getToken();
+  const res = await fetch(url, {
+    ...init,
+    credentials: "include",
+    headers: {
+      ...(init.body ? { "Content-Type": "application/json" } : {}),
+      "X-Waybill-Token": token,
+      ...init.headers,
+    },
+  });
+
+  if (!res.ok || (okStatus !== undefined && res.status !== okStatus)) {
+    const err = await parseJSON<{ error?: string }>(res);
+    throw new Error(err.error || "خطای ناشناخته رخ داد.");
+  }
+
+  return parseJSON<T>(res);
+}
+
 export async function getWaybills(
   params: WaybillParams,
 ): Promise<PaginatedResponse<WaybillResponse>> {
@@ -23,87 +68,38 @@ export async function getWaybills(
     sortBy: params.sortBy,
     orderBy: params.orderBy,
   });
-
-  const token = await getToken();
-  const res = await fetch(url, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      "X-Waybill-Token": token,
-    },
-  });
-  return await res.json();
+  return request(url, { method: "GET" });
 }
 
 export async function getWaybill(waybillId: number): Promise<WaybillDetail> {
-  const token = await getToken();
-  const res = await fetch(`${API_URL}/api/v1/waybills/${waybillId}`, {
-    method: "GET",
-    credentials: "include",
-    headers: {
-      "X-Waybill-Token": token,
-    },
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "خطا در دریافت بارنامه" }));
-    throw new Error(err.error || "خطا در دریافت بارنامه");
-  }
-  return await res.json();
+  return request(`${API_URL}/api/v1/waybills/${waybillId}`, { method: "GET" });
 }
 
 export async function createWaybill(reqData: CreateWaybillReq) {
-  const token = await getToken();
-  const res = await fetch(`${API_URL}/api/v1/waybills`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Waybill-Token": token,
-    },
-    body: JSON.stringify(reqData),
-    credentials: "include",
-  });
-  if (!res.ok || res.status !== 201) {
-    const err = await res.json();
-    throw new Error(err.error);
-  }
-  return await res.json();
+  return request(
+    `${API_URL}/api/v1/waybills`,
+    { method: "POST", body: JSON.stringify(reqData) },
+    201,
+  );
 }
 
 export async function updateWaybill(
   reqData: UpdateWaybillReq,
   waybillId: number,
 ) {
-  const token = await getToken();
-  const res = await fetch(`${API_URL}/api/v1/waybills/${waybillId}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Waybill-Token": token,
-    },
-    body: JSON.stringify(reqData),
-    credentials: "include",
-  });
-  if (!res.ok || res.status !== 200) {
-    const err = await res.json();
-    throw new Error(err.error);
-  }
-  return await res.json();
+  return request(
+    `${API_URL}/api/v1/waybills/${waybillId}`,
+    { method: "PATCH", body: JSON.stringify(reqData) },
+    200,
+  );
 }
 
 export async function deleteWaybill(waybillId: number) {
-  const token = await getToken();
-  const res = await fetch(`${API_URL}/api/v1/waybills/${waybillId}`, {
-    method: "DELETE",
-    credentials: "include",
-    headers: {
-      "X-Waybill-Token": token,
-    },
-  });
-  if (!res.ok || res.status !== 200) {
-    const err = await res.json();
-    throw new Error(err.error);
-  }
-  return await res.json();
+  return request(
+    `${API_URL}/api/v1/waybills/${waybillId}`,
+    { method: "DELETE" },
+    200,
+  );
 }
 
 export async function downloadWaybillsCSV(
@@ -113,9 +109,7 @@ export async function downloadWaybillsCSV(
   const url = withQuery(`${API_URL}/api/v1/waybills/export`, params);
   const res = await fetch(url, {
     credentials: "include",
-    headers: {
-      "X-Waybill-Token": token,
-    },
+    headers: { "X-Waybill-Token": token },
   });
   if (!res.ok) throw new Error("خطا در دانلود فایل");
   return res.blob();
@@ -128,9 +122,7 @@ export async function downloadWaybillDetailCSV(
   const url = `${API_URL}/api/v1/waybills/${waybillId}/export`;
   const res = await fetch(url, {
     credentials: "include",
-    headers: {
-      "X-Waybill-Token": token,
-    },
+    headers: { "X-Waybill-Token": token },
   });
   if (!res.ok) throw new Error("خطا در دانلود فایل");
   return res.blob();
