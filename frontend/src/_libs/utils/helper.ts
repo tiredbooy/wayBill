@@ -44,7 +44,8 @@ export function isUUID(str: string): boolean {
   return uuidRegex.test(str);
 }
 
-export function formatNumber(num: number): string {
+export function formatNumber(num: number | null | undefined): string {
+  if (num == null) return "—";
   return new Intl.NumberFormat("fa-IR").format(num);
 }
 
@@ -63,7 +64,7 @@ export function formatDate(dateStr: string | null): string {
 
 export function getDisplayWaybillNumber(waybill: WaybillDetail): string {
   if (!waybill.waybill_number || isUUID(waybill.waybill_number)) {
-    return waybill.id.toString();
+    return waybill.id?.toString() ?? "—";
   }
   return waybill.waybill_number;
 }

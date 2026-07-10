@@ -44,6 +44,10 @@ export async function getWaybill(waybillId: number): Promise<WaybillDetail> {
       "X-Waybill-Token": token,
     },
   });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "خطا در دریافت بارنامه" }));
+    throw new Error(err.error || "خطا در دریافت بارنامه");
+  }
   return await res.json();
 }
 

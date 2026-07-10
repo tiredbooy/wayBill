@@ -19,9 +19,11 @@ DIST_DIR   := dist
 VERSION    ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "0.0.1-dev")
 COMMIT     := $(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 BUILD_DATE := $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
-LD_FLAGS   := -s -w
+LD_FLAGS := -s -w
+DEBUG_LD_FLAGS :=
 
 WAILS_FLAGS := -ldflags "$(LD_FLAGS)" -tags "desktop"
+DEBUG_WAILS_FLAGS := -ldflags "$(DEBUG_LD_FLAGS)" -tags "desktop"
 
 UNAME_S := $(shell uname -s)
 
@@ -110,11 +112,29 @@ build-linux: frontend-build ## Cross-compile for Linux (amd64)
 	@echo "  Binary: $(BIN_DIR)/$(APP_NAME)-linux-amd64"
 
 .PHONY: build-windows
-build-windows: frontend-build ## Cross-compile for Windows (amd64)
+build-windows: frontend-build
 	@echo "--- Building $(APP_NAME) for windows/amd64 ---"
-	wails build $(WAILS_FLAGS) -platform windows/amd64 -o "waybill.exe"
+	CC=x86_64-w64-mingw32-gcc \
+	CGO_ENABLED=1 \
+	wails build \
+		$(WAILS_FLAGS) \
+		-platform windows/amd64 \
+		-o "waybill.exe"
 	@echo ""
-	@echo "  Binary: $(BIN_DIR)/$(APP_NAME).exe"
+	@echo "  Binary: $(BIN_DIR)/waybill.exe"
+
+.PHONY: build-windows-debug
+build-windows-debug: frontend-build ## Build Windows debug executable
+	@echo "--- Building $(APP_NAME) for windows/amd64 (DEBUG) ---"
+	CC=x86_64-w64-mingw32-gcc \
+	CGO_ENABLED=1 \
+	wails build \
+		$(DEBUG_WAILS_FLAGS) \
+		-platform windows/amd64 \
+		-debug \
+		-o "waybill-debug.exe"
+	@echo ""
+	@echo "  Binary: $(BIN_DIR)/waybill-debug.exe"
 
 .PHONY: build-windows-386
 build-windows-386: frontend-build ## Cross-compile for Windows (386)
