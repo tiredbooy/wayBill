@@ -229,12 +229,22 @@
 
   /* Optional: better print support */
   @media print {
+    @page {
+      size: A4 portrait;
+      margin: 8mm;
+    }
     body {
       background: white !important;
       color: black !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     [data-print-hidden] {
       display: none !important;
+    }
+    .waybill-print-section {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
   }
 }

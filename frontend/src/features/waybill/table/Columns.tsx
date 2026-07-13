@@ -1,7 +1,11 @@
 import type { WaybillResponse } from "@/_libs/types/waybill-types";
 import type { ColumnDef } from "@tanstack/react-table";
 import { WaybillActions } from "./WaybillActions";
-import { convertToPersianDigits } from "@/_libs/utils/helper";
+import {
+  convertToPersianDigits,
+  formatRial,
+  translatePaymentStatus,
+} from "@/_libs/utils/helper";
 
 export const makeWaybillColumns: ColumnDef<WaybillResponse>[] = [
   {
@@ -37,12 +41,12 @@ export const makeWaybillColumns: ColumnDef<WaybillResponse>[] = [
   {
     accessorKey: "payment_status",
     header: "وضعیت پرداخت",
-    cell: ({ row }) => row.original.payment_status || "—",
+    cell: ({ row }) => translatePaymentStatus(row.original.payment_status),
   },
   {
     accessorKey: "total_amount",
-    header: "مبلغ کل",
-    cell: ({ row }) => convertToPersianDigits(row.original.total_amount?.toLocaleString() || "—"),
+    header: "مبلغ کل (ریال)",
+    cell: ({ row }) => formatRial(row.original.total_amount),
   },
   {
     accessorKey: "created_at",

@@ -1,29 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?ifndef var.ProductVersion ?>
+    <?define ProductVersion = "1.0.0" ?>
+  <?endif ?>
   <Product
     Id="*"
     Name="Waybill"
     Language="1033"
-    Version="1.0.0"
+    Version="$(var.ProductVersion)"
     Manufacturer="Softdash"
     UpgradeCode="b9190081-b48a-4815-b72b-ff141e36cec4">
 
     <Package
       InstallerVersion="200"
       Compressed="yes"
+      Platform="x64"
       InstallScope="perMachine"
       Description="Waybill Desktop Application" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of Waybill is already installed." />
 
     <Media Id="1" Cabinet="waybill.cab" EmbedCab="yes" />
 
     <Directory Id="TARGETDIR" Name="SourceDir">
-      <Directory Id="ProgramFilesFolder">
+      <Directory Id="ProgramFiles64Folder">
         <Directory Id="INSTALLFOLDER" Name="Waybill">
-          <Component Id="MainExecutable" Guid="*">
+          <Component Id="MainExecutable" Guid="*" Win64="yes">
             <File Id="waybillExe" Name="waybill.exe" Source="build/bin/waybill.exe" KeyPath="yes" />
           </Component>
-          <Component Id="AppIconFile" Guid="*">
-            <File Id="icon.png" Name="icon.png" Source="icon.ico" KeyPath="yes" />
+          <Component Id="AppIconFile" Guid="*" Win64="yes">
+            <File Id="AppIcon" Name="icon.ico" Source="installer/icon.ico" KeyPath="yes" />
           </Component>
         </Directory>
       </Directory>
@@ -36,22 +42,22 @@
 
     <!-- Start Menu Shortcut with HKLM registry keypath -->
     <DirectoryRef Id="ApplicationProgramsFolder">
-      <Component Id="StartMenuShortcut" Guid="*">
+      <Component Id="StartMenuShortcut" Guid="*" Win64="yes">
         <RegistryValue Root="HKLM" Key="Software\Softdash\Waybill" Name="installed" Type="integer" Value="1" KeyPath="yes" />
         <Shortcut Id="startMenuWaybill" Name="Waybill" Description="Launch Waybill"
                   Target="[INSTALLFOLDER]waybill.exe" WorkingDirectory="INSTALLFOLDER"
-                  Icon="icon.png" />
+                   Icon="WaybillIcon" />
         <RemoveFolder Id="RemoveAppFolder" On="uninstall" />
       </Component>
     </DirectoryRef>
 
     <!-- Desktop Shortcut with HKLM registry keypath -->
     <DirectoryRef Id="DesktopFolder">
-      <Component Id="DesktopShortcut" Guid="*">
+      <Component Id="DesktopShortcut" Guid="*" Win64="yes">
         <RegistryValue Root="HKLM" Key="Software\Softdash\Waybill\Desktop" Name="installed" Type="integer" Value="1" KeyPath="yes" />
         <Shortcut Id="desktopWaybill" Name="Waybill" Description="Launch Waybill"
                   Target="[INSTALLFOLDER]waybill.exe" WorkingDirectory="INSTALLFOLDER"
-                  Icon="icon.png" />
+                   Icon="WaybillIcon" />
         <RemoveFolder Id="RemoveDesktopFolder" On="uninstall" />
       </Component>
     </DirectoryRef>
@@ -63,7 +69,7 @@
       <ComponentRef Id="DesktopShortcut" />
     </Feature>
 
-    <Icon Id="icon.png" SourceFile="icon.ico" />
-    <Property Id="ARPPRODUCTICON" Value="icon.png" />
+    <Icon Id="WaybillIcon" SourceFile="installer/icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="WaybillIcon" />
   </Product>
 </Wix>

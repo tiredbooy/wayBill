@@ -28,7 +28,7 @@ import {
   Users,
 } from "lucide-react";
 import { PERIODS } from "@/_libs/services/api/analytics-api";
-import { convertToPersianDigits } from "@/_libs/utils/helper";
+import { convertToPersianDigits, formatRial } from "@/_libs/utils/helper";
 
 export interface AnalyticsSummary {
   total_waybills: number;
@@ -62,9 +62,6 @@ export default function DashboardContent({
   period,
   onPeriodChange,
 }: DashboardContentProps) {
-  const formatCurrency = (value: number) =>
-    new Intl.NumberFormat("fa-IR").format(value) + " تومان";
-
   const formatNumber = (value: number) =>
     new Intl.NumberFormat("fa-IR").format(value);
 
@@ -180,10 +177,10 @@ export default function DashboardContent({
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {formatCurrency(data.total_freight)}
+                      {formatRial(data.total_freight)}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      میانگین: {formatCurrency(data.average_freight)}
+                      میانگین: {formatRial(data.average_freight)}
                     </p>
                   </CardContent>
                 </Card>
@@ -198,7 +195,7 @@ export default function DashboardContent({
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {formatCurrency(data.total_amount)}
+                      {formatRial(data.total_amount)}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       مجموع بارنامه‌ها
@@ -216,7 +213,7 @@ export default function DashboardContent({
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {formatCurrency(Number(data?.revenue?.toFixed(0)))}
+                      {formatRial(Number(data?.revenue?.toFixed(0)))}
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       نرخ: {convertToPersianDigits(data.commission_rate)}٪

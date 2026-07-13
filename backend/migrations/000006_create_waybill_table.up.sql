@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS waybill (
     FOREIGN KEY (sender_id)    REFERENCES customer(id),
     FOREIGN KEY (receiver_id)  REFERENCES customer(id),
     FOREIGN KEY (driver_id)    REFERENCES driver(id),
-    FOREIGN KEY (vehicle_id)   REFERENCES vehicle(id)
-    FOREIGN KEY (origin_location_id) REFERENCES location(id)
+    FOREIGN KEY (vehicle_id)   REFERENCES vehicle(id),
+    FOREIGN KEY (origin_location_id) REFERENCES location(id),
     FOREIGN KEY (destination_location_id) REFERENCES location(id)
 );
 

@@ -11,7 +11,7 @@ interface Props {
 
 export default function CreateOrEditWaybillSection ({ mode = "create", waybill, breadCrump }: Props) {
   return (
-    <div className="flex flex-col px-4 py-8 gap-5">
+    <main className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-6 md:px-6 md:py-8">
       {breadCrump && <Breadcrumb
         labelMap={{
           dashboard: "داشبورد",
@@ -22,17 +22,17 @@ export default function CreateOrEditWaybillSection ({ mode = "create", waybill, 
         }}
       />}
 
-      <Card>
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-x1 font-bold">
-            {mode === "create" ? "افزودن خودرو جدید" : "ویرایش خودرو"}
+      <Card className="overflow-hidden border-primary/20 bg-linear-to-l from-primary/8 via-card to-card">
+        <CardHeader className="space-y-2">
+          <CardTitle className="text-xl font-bold md:text-2xl">
+            {mode === "create" ? "ثبت بارنامه جدید" : "ویرایش بارنامه"}
           </CardTitle>
           <CardDescription>
-            لطفا اطلاعات خودرو را در فرو زیر وارد کنید.
+            اطلاعات حمل، طرفین و مبالغ را تکمیل کنید. فیلدهای ضروری هنگام ذخیره مشخص می‌شوند.
           </CardDescription>
         </CardHeader>
       </Card>
       <WaybillForm mode={mode} waybill={waybill} />
-    </div>
+    </main>
   );
 };

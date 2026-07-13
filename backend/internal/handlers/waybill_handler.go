@@ -137,8 +137,6 @@ func (h *WaybillHandler) DeleteWaybill(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "بارنامه با موفقیت حذف شد."})
 }
 
-
-
 func (h *WaybillHandler) ExportWaybillsCSV(c *gin.Context) {
 	var q models.WaybillFilters
 	if err := c.ShouldBindQuery(&q); err != nil {
@@ -180,7 +178,7 @@ func (h *WaybillHandler) ExportWaybillsCSV(c *gin.Context) {
 		"مبدا",
 		"مقصد",
 		"وزن کل",
-		"مبلغ کل",
+		"مبلغ کل (ریال)",
 		"بیمه",
 		"وضعیت پرداخت",
 	}
@@ -239,11 +237,11 @@ func (h *WaybillHandler) ExportWaybillDetailCSV(c *gin.Context) {
 		"وزن کل",
 		"تعداد بسته",
 		"شرح کالا",
-		"کرایه",
+		"کرایه (ریال)",
 		"بیمه دارد",
-		"مبلغ بیمه",
-		"سایر هزینه‌ها",
-		"مبلغ کل",
+		"مبلغ بیمه (ریال)",
+		"سایر هزینه‌ها (ریال)",
+		"مبلغ کل (ریال)",
 		"وضعیت پرداخت",
 		"یادداشت",
 		"تاریخ ایجاد",

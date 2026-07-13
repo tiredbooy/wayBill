@@ -2,6 +2,7 @@ import {
   type Control,
   Controller,
   type FieldValues,
+  type FieldPathValue,
   type Path,
 } from "react-hook-form";
 import {
@@ -11,6 +12,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
@@ -25,6 +27,8 @@ interface FormInputProps<T extends FieldValues> {
   step?: string;
   disabled?: boolean;
   className?: string;
+  multiline?: boolean;
+  rows?: number;
 }
 
 export function FormInput<T extends FieldValues>({
@@ -38,6 +42,8 @@ export function FormInput<T extends FieldValues>({
   step,
   disabled,
   className,
+  multiline = false,
+  rows = 3,
 }: FormInputProps<T>) {
   const LabelContent = (
     <div className="flex items-center gap-2">
@@ -51,19 +57,29 @@ export function FormInput<T extends FieldValues>({
       <Controller
         control={control}
         name={name}
-        defaultValue={"" as any}
+        defaultValue={"" as FieldPathValue<T, Path<T>>}
         render={({ field }) => (
           <FormItem className={className}>
             <FormLabel>{LabelContent}</FormLabel>
             <FormControl>
-              <Input
-                {...field}
-                value={field.value ?? ""}
-                type={type}
-                step={step}
-                placeholder={placeholder}
-                disabled={disabled}
-              />
+              {multiline ? (
+                <Textarea
+                  {...field}
+                  value={field.value ?? ""}
+                  rows={rows}
+                  placeholder={placeholder}
+                  disabled={disabled}
+                />
+              ) : (
+                <Input
+                  {...field}
+                  value={field.value ?? ""}
+                  type={type}
+                  step={step}
+                  placeholder={placeholder}
+                  disabled={disabled}
+                />
+              )}
             </FormControl>
             {error && <span className="text-destructive text-sm">{error}</span>}
             <FormMessage />
@@ -76,7 +92,11 @@ export function FormInput<T extends FieldValues>({
   return (
     <div className={cn("space-y-2", className)}>
       <label className="text-sm font-medium">{LabelContent}</label>
-      <Input type={type} placeholder={placeholder} disabled={disabled} />
+      {multiline ? (
+        <Textarea rows={rows} placeholder={placeholder} disabled={disabled} />
+      ) : (
+        <Input type={type} placeholder={placeholder} disabled={disabled} />
+      )}
     </div>
   );
 }

@@ -49,6 +49,10 @@ export function formatNumber(num: number | null | undefined): string {
   return new Intl.NumberFormat("fa-IR").format(num);
 }
 
+export function formatRial(amount: number | null | undefined): string {
+  return amount == null ? "—" : `${formatNumber(amount)} ریال`;
+}
+
 export function formatDate(dateStr: string | null): string {
   if (!dateStr) return "—";
   try {
@@ -76,13 +80,27 @@ const paymentStatusMap: Record<string, string> = {
   refunded: "بازگشت وجه",
 };
 
+const waybillStatusMap: Record<string, string> = {
+  created: "ایجاد شده",
+  pending: "در انتظار",
+  in_transit: "در مسیر",
+  delivered: "تحویل شده",
+  cancelled: "لغو شده",
+};
+
 export function translatePaymentStatus(status: string | null): string {
   if (!status) return "—";
   return paymentStatusMap[status.toLowerCase()] || status;
 }
 
+export function translateWaybillStatus(status: string | null): string {
+  if (!status) return "—";
+  return waybillStatusMap[status.toLowerCase()] || status;
+}
+
 export function convertToPersianWords(amount: number): string {
-  if (amount === 0) return "صفر تومان";
+  amount = Math.round(amount);
+  if (amount === 0) return "صفر ریال";
 
   const units = ["", "یک", "دو", "سه", "چهار", "پنج", "شش", "هفت", "هشت", "نه"];
   const teens = [
@@ -154,5 +172,5 @@ export function convertToPersianWords(amount: number): string {
     groupIndex++;
   }
 
-  return groupParts.join(" و ") + " تومان";
+  return groupParts.join(" و ") + " ریال";
 }

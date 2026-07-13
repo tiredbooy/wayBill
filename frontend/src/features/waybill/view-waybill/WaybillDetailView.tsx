@@ -1,5 +1,10 @@
 import type { WaybillDetail } from "@/_libs/types/waybill-types";
-import { convertToPersianDigits } from "@/_libs/utils/helper";
+import {
+  convertToPersianDigits,
+  formatRial,
+  translatePaymentStatus,
+  translateWaybillStatus,
+} from "@/_libs/utils/helper";
 
 interface Props {
   waybill: WaybillDetail;
@@ -12,7 +17,7 @@ export function WaybillDetailView({ waybill }: Props) {
     { label: "تاریخ بارگیری", value: new Date(waybill.dispatch_date).toLocaleDateString("fa-IR") },
     // { label: "تاریخ تحویل پیش‌بینی شده", value: waybill.expected_delivery_date ? new Date(waybill.expected_delivery_date).toLocaleDateString("fa-IR") : "—" },
     { label: "تاریخ تحویل", value: waybill.actual_delivery_date ? new Date(waybill.actual_delivery_date).toLocaleDateString("fa-IR") : "—" },
-    { label: "وضعیت", value: waybill.status || "—" },
+    { label: "وضعیت", value: translateWaybillStatus(waybill.status) },
     { label: "فرستنده", value: `${waybill.sender}` },
     { label: "گیرنده", value: `${waybill.receiver}` },
     { label: "راننده", value: `${waybill.driver}` },
@@ -22,12 +27,12 @@ export function WaybillDetailView({ waybill }: Props) {
     { label: "وزن کل (کیلوگرم)", value: convertToPersianDigits(waybill.total_weight) },
     { label: "تعداد بسته‌ها", value: convertToPersianDigits(waybill.total_packages) },
     { label: "شرح", value: waybill.description || "—" },
-    { label: "کرایه حمل", value: convertToPersianDigits(waybill.freight_charge?.toLocaleString()) },
+    { label: "کرایه حمل", value: formatRial(waybill.freight_charge) },
     { label: "بیمه", value: waybill.have_insurance ? "دارد" : "ندارد" },
-    { label: "مبلغ بیمه", value: convertToPersianDigits(waybill.insurance_amount?.toLocaleString()) },
-    { label: "سایر هزینه‌ها", value: convertToPersianDigits(waybill.other_charges?.toLocaleString() || "—") },
-    { label: "مبلغ کل", value: convertToPersianDigits(waybill.total_amount?.toLocaleString() || "—") },
-    { label: "وضعیت پرداخت", value: waybill.payment_status || "—" },
+    { label: "مبلغ بیمه", value: formatRial(waybill.insurance_amount) },
+    { label: "سایر هزینه‌ها", value: formatRial(waybill.other_charges) },
+    { label: "مبلغ کل", value: formatRial(waybill.total_amount) },
+    { label: "وضعیت پرداخت", value: translatePaymentStatus(waybill.payment_status) },
     { label: "یادداشت", value: waybill.notes || "—" },
     { label: "تاریخ ثبت", value: new Date(waybill.created_at).toLocaleDateString("fa-IR") },
     { label: "آخرین بروزرسانی", value: new Date(waybill.updated_at).toLocaleDateString("fa-IR") },

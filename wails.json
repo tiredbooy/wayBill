@@ -6,8 +6,15 @@
   "frontend:build": "npm run build",
   "frontend:dev:watcher": "npm run dev",
   "frontend:dev:serverUrl": "auto",
+  "info": {
+    "companyName": "Softdash",
+    "productName": "Waybill",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright © 2026 Softdash",
+    "comments": "Waybill desktop management application"
+  },
   "author": {
-    "name": "tiredbooy",
+    "name": "Softdash",
     "email": "mahdykazemyo1i2@gmail.com"
   }
 }

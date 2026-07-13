@@ -43,7 +43,6 @@ func (r *waybillRepository) Create(ctx context.Context, req models.CreateWaybill
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `
 
-	var totalAmount float64
 	freightCharge := 0.0
 	if req.FreightCharge != nil {
 		freightCharge = *req.FreightCharge
@@ -52,9 +51,7 @@ func (r *waybillRepository) Create(ctx context.Context, req models.CreateWaybill
 	if req.OtherCharges != nil {
 		otherCharges = *req.OtherCharges
 	}
-	if freightCharge > 0 && otherCharges > 0 {
-		totalAmount = freightCharge + otherCharges
-	}
+	totalAmount := freightCharge + otherCharges
 	if req.HaveInsurance {
 		insuranceAmount := 0.0
 		if req.InsuranceAmount != 0 {
@@ -371,6 +368,11 @@ func (r *waybillRepository) Update(ctx context.Context, waybillID int64, req mod
 		updates = append(updates, "have_insurance = ?")
 		args = append(args, *req.HaveInsurance)
 		argPos++
+		if !*req.HaveInsurance && req.InsuranceAmount == nil {
+			updates = append(updates, "insurance_amount = ?")
+			args = append(args, 0)
+			argPos++
+		}
 	}
 
 	if req.InsuranceAmount != nil {
@@ -385,12 +387,6 @@ func (r *waybillRepository) Update(ctx context.Context, waybillID int64, req mod
 		argPos++
 	}
 
-	if req.TotalAmount != nil {
-		updates = append(updates, "total_amount = ?")
-		args = append(args, *req.TotalAmount)
-		argPos++
-	}
-
 	if req.PaymentStatus != nil {
 		updates = append(updates, "payment_status = ?")
 		args = append(args, *req.PaymentStatus)
@@ -401,12 +397,21 @@ func (r *waybillRepository) Update(ctx context.Context, waybillID int64, req mod
 		query := fmt.Sprintf("UPDATE waybill SET %s WHERE id = ?", strings.Join(updates, ", "))
 		args = append(args, waybillID)
 
-		_, err := tx.Exec(query, args...)
+		_, err := tx.ExecContext(ctx, query, args...)
 		if err != nil {
 			return apperr.New(apperr.Invalid, "خطا: برای ویرایش بارنامه فیلد های مورد نیاز را پرکنید.")
 		}
 	}
 
+	if _, err := tx.ExecContext(ctx, `
+		UPDATE waybill
+		SET total_amount = COALESCE(freight_charge, 0)
+			+ CASE WHEN have_insurance THEN COALESCE(insurance_amount, 0) ELSE 0 END
+			+ COALESCE(other_charges, 0)
+		WHERE id = ?
+	`, waybillID); err != nil {
+		return apperr.Wrap(apperr.Internal, "خطا: محاسبه مبلغ کل بارنامه ناموفق بود.", err)
+	}
 	err = tx.Commit()
 	if err != nil {
 		return apperr.New(apperr.Invalid, "هنگام ویرایش بارنامه خطایی رخ داد.")

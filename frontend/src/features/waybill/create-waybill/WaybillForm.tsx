@@ -1,11 +1,12 @@
 import {
   useForm,
+  useWatch,
   type FieldErrors,
   type SubmitHandler,
   type SubmitErrorHandler,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 import {
@@ -22,6 +23,7 @@ import { Form } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { formatNumber } from "@/_libs/utils/helper";
 
 import { BasicInfoSection } from "./BasicInfoSection";
 import { EntitiesSection } from "./EntitiesSection";
@@ -105,7 +107,7 @@ export function WaybillForm({ mode = "create", waybill, onSuccess }: Props) {
       issue_date: waybill?.issue_date ?? "",
       dispatch_date: waybill?.dispatch_date ?? "",
       actual_delivery_date: waybill?.actual_delivery_date ?? "",
-      status: waybill?.status ?? "",
+      status: waybill?.status ?? "pending",
       sender_id: waybill?.sender_id ? String(waybill.sender_id) : "",
       receiver_id: waybill?.receiver_id ? String(waybill.receiver_id) : "",
       driver_id: waybill?.driver_id ? String(waybill.driver_id) : "",
@@ -131,7 +133,7 @@ export function WaybillForm({ mode = "create", waybill, onSuccess }: Props) {
       other_charges: waybill?.other_charges
         ? String(waybill.other_charges)
         : "",
-      payment_status: waybill?.payment_status ?? "",
+      payment_status: waybill?.payment_status ?? "unpaid",
       notes: waybill?.notes ?? "",
     },
     mode: "onSubmit",
@@ -141,13 +143,32 @@ export function WaybillForm({ mode = "create", waybill, onSuccess }: Props) {
     control,
     formState: { errors, isSubmitting },
     reset,
-    watch,
     setValue,
     setFocus,
   } = form;
 
-  const haveInsurance = watch("have_insurance");
-  const selectedDriverId = watch("driver_id");
+  const [
+    haveInsurance,
+    selectedDriverId,
+    freightChargeValue,
+    insuranceAmountValue,
+    otherChargesValue,
+  ] = useWatch({
+    control,
+    name: [
+      "have_insurance",
+      "driver_id",
+      "freight_charge",
+      "insurance_amount",
+      "other_charges",
+    ],
+  });
+  const freightCharge = Number(freightChargeValue) || 0;
+  const insuranceAmount = haveInsurance
+    ? Number(insuranceAmountValue) || 0
+    : 0;
+  const otherCharges = Number(otherChargesValue) || 0;
+  const estimatedTotal = freightCharge + insuranceAmount + otherCharges;
 
   // Only auto-fill vehicle_id the first time a given driver is selected,
   // not every time the drivers list refetches (e.g. while typing a search).
@@ -168,33 +189,26 @@ export function WaybillForm({ mode = "create", waybill, onSuccess }: Props) {
     }
   }, [selectedDriverId, drivers, setValue]);
 
-  const scrollAndFocus = useCallback(
-    (errs: FieldErrors<WaybillFormValues>) => {
-      const firstKey = Object.keys(errs)[0] as keyof WaybillFormValues;
-      if (firstKey) {
-        setTimeout(() => setFocus(firstKey), 150);
-      }
-    },
-    [setFocus],
-  );
+  function scrollAndFocus(errs: FieldErrors<WaybillFormValues>) {
+    const firstKey = Object.keys(errs)[0] as keyof WaybillFormValues;
+    if (firstKey) {
+      setTimeout(() => setFocus(firstKey), 150);
+    }
+  }
 
-  const onInvalid: SubmitErrorHandler<WaybillFormValues> = useCallback(
-    (errs) => {
-      setSubmitAttempted(true);
-      scrollAndFocus(errs);
-    },
-    [scrollAndFocus],
-  );
+  const onInvalid: SubmitErrorHandler<WaybillFormValues> = (errs) => {
+    setSubmitAttempted(true);
+    scrollAndFocus(errs);
+  };
 
-  const resetPickerState = useCallback(() => {
+  function resetPickerState() {
     [sender, receiver, driver, vehicle, origin, destination].forEach((p) => {
       p.setSearch("");
     });
     lastAppliedDriverId.current = null;
-  }, [sender, receiver, driver, vehicle, origin, destination]);
+  }
 
-  const onSubmit: SubmitHandler<WaybillFormValues> = useCallback(
-    async (data) => {
+  const onSubmit: SubmitHandler<WaybillFormValues> = async (data) => {
       setSubmitAttempted(false);
       try {
         const payload = {
@@ -246,33 +260,17 @@ export function WaybillForm({ mode = "create", waybill, onSuccess }: Props) {
         }
 
         onSuccess?.();
-      } catch (err: any) {
-        const message = err?.message || "خطا در ثبت بارنامه";
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "خطا در ثبت بارنامه";
         toast.error(message);
       }
-    },
-    [
-      mode,
-      waybill?.id,
-      createWaybill,
-      updateWaybill,
-      reset,
-      resetPickerState,
-      onSuccess,
-    ],
-  );
+  };
 
   const isPending =
     createWaybill.isPending || updateWaybill.isPending || isSubmitting;
 
   const errorNames = Object.keys(errors);
   const errorCount = errorNames.length;
-
-  useEffect(() => {
-    if (submitAttempted && errorCount === 0) {
-      setSubmitAttempted(false);
-    }
-  }, [errors, submitAttempted, errorCount]);
 
   const selectedDriver = toItems<DriverResponse>(drivers).find(
     (d) => d.id === Number(selectedDriverId),
@@ -283,8 +281,10 @@ export function WaybillForm({ mode = "create", waybill, onSuccess }: Props) {
     <>
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(onSubmit, onInvalid)}
-          className="space-y-8"
+          onSubmit={(event) => {
+            void form.handleSubmit(onSubmit, onInvalid)(event);
+          }}
+          className="space-y-5"
         >
           {submitAttempted && errorCount > 0 && (
             <Alert
@@ -338,23 +338,31 @@ export function WaybillForm({ mode = "create", waybill, onSuccess }: Props) {
 
           <Separator />
 
-          <Button
-            type="submit"
-            className="w-full"
-            size="lg"
-            disabled={isPending}
-          >
-            {isPending ? (
-              <>
-                <Spinner className="ml-2" />
-                در حال ذخیره...
-              </>
-            ) : mode === "create" ? (
-              "ثبت بارنامه"
-            ) : (
-              "به‌روزرسانی بارنامه"
-            )}
-          </Button>
+          <div className="sticky bottom-3 z-10 flex flex-col gap-3 rounded-xl border border-primary/20 bg-background/95 p-4 shadow-lg backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
+            <div aria-live="polite">
+              <p className="text-xs text-muted-foreground">مبلغ کل بارنامه</p>
+              <p className="text-lg font-bold tabular-nums">
+                {formatNumber(estimatedTotal)} ریال
+              </p>
+            </div>
+            <Button
+              type="submit"
+              className="min-w-48"
+              size="lg"
+              disabled={isPending}
+            >
+              {isPending ? (
+                <>
+                  <Spinner className="ml-2" />
+                  در حال ذخیره...
+                </>
+              ) : mode === "create" ? (
+                "ثبت بارنامه"
+              ) : (
+                "ذخیره تغییرات"
+              )}
+            </Button>
+          </div>
         </form>
       </Form>
 

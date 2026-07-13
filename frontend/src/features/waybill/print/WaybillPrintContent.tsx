@@ -3,9 +3,11 @@ import type { WaybillDetail } from "@/_libs/types/waybill-types";
 import {
   convertToPersianDigits,
   convertToPersianWords,
+  formatDate,
   formatNumber,
   getDisplayWaybillNumber,
   translatePaymentStatus,
+  translateWaybillStatus,
 } from "@/_libs/utils/helper";
 import { forwardRef } from "react";
 
@@ -23,13 +25,12 @@ export const WaybillPrintContent = forwardRef<
 
   const disclaimer = `بدینوسیله محموله صحیح و سالم تحویل شد و رضایت کامل حاصل است. راننده مسئول است در هنگام بارگیری آن را شمارش و موقع تحویل رسید دریافت کند. جهت حمل بارهای استاندارد با توافق طرفین خواهد بود. هرگونه جریمه ارتفاع بار ممنوع و به عهده صاحب کالا می‌باشد.`;
 
-  const [phone1, phone2] = setting?.contact?.mobiles?.slice(0, 2) || [];
-  console.log(`Phone 1: ${phone1} -- Phone 2: ${phone2}`);
+  const mobilePhones = setting?.contact?.mobiles?.filter(Boolean).slice(0, 2) || [];
 
   return (
     <div
       ref={ref}
-      className="print:w-full print:max-w-none w-full bg-white p-4 print:p-5"
+      className="waybill-print w-full bg-white p-4 print:p-0"
       style={{
         direction: "rtl",
         fontFamily: "Vazirmatn, Tahoma, sans-serif",
@@ -39,7 +40,7 @@ export const WaybillPrintContent = forwardRef<
       }}
     >
       {/* ========== HEADER (company left, waybill right) ========== */}
-      <div className="relative mb-4 pt-6 pb-3 px-3 border border-gray-400 rounded-sm">
+      <header className="waybill-print-section relative mb-3 rounded-sm border border-gray-500 px-3 pb-3 pt-6">
         <div
           className="absolute top-1.5 right-2 text-right bg-white px-2 py-1 rounded-sm"
           style={{ minWidth: "120px" }}
@@ -55,7 +56,7 @@ export const WaybillPrintContent = forwardRef<
             <div className="text-[9px] text-gray-500 print:text-gray-400 mt-1 pt-1 border-t border-gray-200 print:border-gray-300">
               <span className="font-medium">تاریخ: </span>
               <span style={{ direction: "ltr" }}>
-                {new Date(waybill.issue_date).toLocaleDateString("fa-IR")}
+                {formatDate(waybill.issue_date)}
               </span>
             </div>
           )}
@@ -83,9 +84,11 @@ export const WaybillPrintContent = forwardRef<
           )}
 
           {/* Contact – compact, without extra label */}
-          {(phone1 || setting?.contact?.fixed) && (
+          {(mobilePhones.length > 0 || setting?.contact?.fixed) && (
             <p className="text-[10px] text-gray-700">
-              {phone1 && <>تلفن: {convertToPersianDigits(phone1)}</>}
+              {mobilePhones.length > 0 && (
+                <>تلفن: {mobilePhones.map(convertToPersianDigits).join(" - ")}</>
+              )}
               {setting?.contact?.fixed && (
                 <>
                   {" "}
@@ -95,10 +98,10 @@ export const WaybillPrintContent = forwardRef<
             </p>
           )}
         </div>
-      </div>
+      </header>
 
       {/* ========== SENDER & RECEIVER (side‑by‑side on landscape) ========== */}
-      <div className="grid grid-cols-1 print:grid-cols-2 gap-4 mb-5">
+      <section className="waybill-print-section mb-3 grid grid-cols-1 gap-3 print:grid-cols-2">
         <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
           <h3 className="font-bold text-sm border-r-4 border-blue-500 pr-2 mb-2">
             فرستنده
@@ -161,10 +164,10 @@ export const WaybillPrintContent = forwardRef<
             )}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* ========== DRIVER & VEHICLE (side‑by‑side) ========== */}
-      <div className="grid grid-cols-1 print:grid-cols-2 gap-4 mb-5">
+      <section className="waybill-print-section mb-3 grid grid-cols-1 gap-3 print:grid-cols-2">
         <div className="bg-gray-50 p-3 rounded-md border border-gray-200">
           <h3 className="font-bold text-sm border-r-4 border-yellow-600 pr-2 mb-2">
             راننده
@@ -213,10 +216,10 @@ export const WaybillPrintContent = forwardRef<
             )}
           </div>
         </div>
-      </div>
+      </section>
 
       {/* ========== CARGO DETAILS ========== */}
-      <div className="bg-gray-50 p-3 rounded-md border border-gray-200 mb-5">
+      <section className="waybill-print-section mb-3 rounded-md border border-gray-300 bg-gray-50 p-3">
         <h3 className="font-bold text-sm border-r-4 border-red-500 pr-2 mb-2">
           مشخصات محموله
         </h3>
@@ -233,6 +236,18 @@ export const WaybillPrintContent = forwardRef<
               {formatNumber(waybill.total_packages)} عدد
             </span>
           )}
+          {waybill.dispatch_date && (
+            <span>
+              <span className="font-medium">تاریخ بارگیری:</span>{" "}
+              {formatDate(waybill.dispatch_date)}
+            </span>
+          )}
+          {waybill.status && (
+            <span>
+              <span className="font-medium">وضعیت:</span>{" "}
+              {translateWaybillStatus(waybill.status)}
+            </span>
+          )}
           {waybill.description && (
             <span className="w-full">
               <span className="font-medium">شرح کالا:</span>{" "}
@@ -240,57 +255,62 @@ export const WaybillPrintContent = forwardRef<
             </span>
           )}
         </div>
-      </div>
+      </section>
 
       {/* ========== FINANCIAL ROW (one line) ========== */}
-      <div className="bg-gray-100 p-2 rounded-md border border-gray-300 mb-5 flex flex-wrap justify-between items-center text-[11px] font-medium">
-        <span>کرایه: {formatNumber(waybill.freight_charge ?? 0)} تومان</span>
+      <section className="waybill-print-section mb-3 rounded-md border border-gray-400 bg-gray-100 p-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] font-medium">
+        <span>کرایه: {formatNumber(waybill.freight_charge ?? 0)} ریال</span>
         <span>
           بیمه:{" "}
           {waybill.have_insurance && waybill.insurance_amount != null
-            ? `${formatNumber(waybill.insurance_amount)} تومان`
+            ? `${formatNumber(waybill.insurance_amount)} ریال`
             : "ندارد"}
         </span>
         {waybill.other_charges && waybill.other_charges > 0 && (
-          <span> سایر: {formatNumber(waybill.other_charges)} تومان</span>
+          <span> سایر: {formatNumber(waybill.other_charges)} ریال</span>
         )}
         <span>
           وضعیت پرداخت:{" "}
           {translatePaymentStatus(waybill.payment_status ?? "unknown")}
         </span>
         <span className="text-black font-bold text-sm">
-          مجموع: {formatNumber(totalAmount)} تومان
+          مجموع: {formatNumber(totalAmount)} ریال
         </span>
-      </div>
-      <div className="text-[11px] text-gray-600 -mt-3 mb-4 text-left">
+        </div>
+      <div className="mt-2 border-t border-gray-300 pt-2 text-left text-[10px] text-gray-600">
         {priceWords}
       </div>
+      </section>
+
+      {waybill.notes && (
+        <section className="waybill-print-section mb-3 rounded-sm border border-gray-300 px-3 py-2 text-[10px]">
+          <span className="font-bold">توضیحات تکمیلی: </span>
+          {waybill.notes}
+        </section>
+      )}
 
       {/* ========== LEGAL DISCLAIMER ========== */}
-      <div className="text-[10px] text-gray-600 leading-relaxed text-justify border-t border-gray-200 pt-3 mb-4">
+      <section className="waybill-print-section mb-4 border-t border-gray-300 pt-2 text-justify text-[9px] leading-relaxed text-gray-600">
         {disclaimer}
-      </div>
+      </section>
 
       {/* ========== SIGNATURE (single) ========== */}
-      <div className="flex justify-between items-end mt-2">
-        {setting?.company_name && (
-          <div className="text-[10px] text-gray-400">
-            چاپ شده در {setting.company_name}
-          </div>
+      <section className="waybill-print-section grid grid-cols-3 gap-6 pt-8 text-center text-[10px] font-bold">
+        {["امضا و مهر فرستنده", "امضای راننده", "امضا و مهر گیرنده"].map(
+          (label) => (
+            <div key={label} className="border-t border-dotted border-gray-500 pt-2">
+              {label}
+            </div>
+          ),
         )}
-
-        <div className="text-center min-w-[180px]">
-          <div className="border-t border-dotted border-gray-400 pt-3 w-full" />
-          <div className="font-bold text-[11px] mt-1">
-            امضا و مهر فرستنده / گیرنده
-          </div>
-        </div>
-      </div>
+      </section>
 
       {/* Footer */}
-      <div className="text-center text-[9px] text-gray-400 mt-4 pt-1 border-t border-gray-200">
-        تاریخ چاپ: {new Intl.DateTimeFormat("fa-IR").format(new Date())}
-      </div>
+      <footer className="mt-4 flex items-center justify-between border-t border-gray-200 pt-1 text-[8px] text-gray-400">
+        <span>{setting?.company_name ? `چاپ شده در ${setting.company_name}` : "بارنامه"}</span>
+        <span>تاریخ چاپ: {new Intl.DateTimeFormat("fa-IR").format(new Date())}</span>
+      </footer>
     </div>
   );
 });

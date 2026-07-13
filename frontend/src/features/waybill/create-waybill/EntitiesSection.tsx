@@ -1,4 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { EntitySelector } from "./EntitySelector";
 import {
   mapCustomerOptions,
@@ -11,6 +17,8 @@ import type { CustomerDetail } from "@/_libs/types/customer-types";
 import type { DriverResponse } from "@/_libs/types/driver-types";
 import type { VehicleResponse } from "@/_libs/types/vehicle-types";
 import type { LocationDetail } from "@/_libs/types/location-types";
+import type { Control, FieldErrors } from "react-hook-form";
+import type { WaybillFormValues } from "./schema";
 
 interface PickerBundle {
   search: string;
@@ -21,8 +29,8 @@ interface PickerBundle {
 }
 
 interface EntitiesSectionProps {
-  control: any;
-  errors: any;
+  control: Control<WaybillFormValues>;
+  errors: FieldErrors<WaybillFormValues>;
   sender: PickerBundle;
   receiver: PickerBundle;
   driver: PickerBundle;
@@ -44,11 +52,14 @@ export function EntitiesSection({
   isVehicleFixed,
 }: EntitiesSectionProps) {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="overflow-hidden border-border/70">
+      <CardHeader className="border-b bg-muted/30">
         <CardTitle>طرفین و ناوگان حمل</CardTitle>
+        <CardDescription>
+          فرستنده، گیرنده، مسیر، راننده و وسیله نقلیه را مشخص کنید
+        </CardDescription>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         <EntitySelector
           control={control}
           name="sender_id"

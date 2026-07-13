@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { Control, FieldErrors } from "react-hook-form";
 import type { CustomerDetail } from "@/_libs/types/customer-types";
 import type { DriverResponse } from "@/_libs/types/driver-types";
 import type { VehicleResponse } from "@/_libs/types/vehicle-types";
@@ -33,6 +34,46 @@ export const waybillSchema = z.object({
   other_charges: numericString("سایر هزینه‌ها"),
   payment_status: z.string().optional(),
   notes: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.sender_id && data.sender_id === data.receiver_id) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["receiver_id"],
+      message: "فرستنده و گیرنده نمی‌توانند یکسان باشند",
+    });
+  }
+  if (
+    data.origin_location_id &&
+    data.origin_location_id === data.destination_location_id
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["destination_location_id"],
+      message: "مبدا و مقصد نمی‌توانند یکسان باشند",
+    });
+  }
+  if (
+    data.issue_date &&
+    data.dispatch_date &&
+    new Date(data.dispatch_date) < new Date(data.issue_date)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["dispatch_date"],
+      message: "تاریخ بارگیری نمی‌تواند قبل از تاریخ صدور باشد",
+    });
+  }
+  if (
+    data.dispatch_date &&
+    data.actual_delivery_date &&
+    new Date(data.actual_delivery_date) < new Date(data.dispatch_date)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["actual_delivery_date"],
+      message: "تاریخ تحویل نمی‌تواند قبل از تاریخ بارگیری باشد",
+    });
+  }
 });
 
 export type WaybillFormValues = z.input<typeof waybillSchema>;
@@ -53,6 +94,6 @@ export const mapLocationOptions = (data: LocationDetail[] = []) =>
   data.map((l) => ({ label: l.name, value: String(l.id) }));
 
 export interface SectionProps {
-  control: any;
-  errors: any;
+  control: Control<WaybillFormValues>;
+  errors: FieldErrors<WaybillFormValues>;
 }

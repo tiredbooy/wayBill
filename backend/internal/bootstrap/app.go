@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 	"waybill/backend/internal/config"
 	"waybill/backend/internal/database"
 	"waybill/backend/internal/handlers"
@@ -110,16 +111,17 @@ func New(cfg *config.Config) (*App, error) {
 }
 
 func (a *App) Run() error {
-	port := a.cfg.ServerPort
-	if port == "" {
-		port = "8080"
+	address := strings.TrimSpace(a.cfg.ServerPort)
+	if address == "" {
+		address = "127.0.0.1:8080"
+	}
+	if strings.HasPrefix(address, ":") {
+		address = "127.0.0.1" + address
+	} else if !strings.Contains(address, ":") {
+		address = "127.0.0.1:" + address
 	}
 
-	if port[0] != ':' {
-		port = ":" + port
-	}
+	log.Printf("listening on %s", address)
 
-	log.Printf("listening on %s", port)
-
-	return a.router.Run(port)
+	return a.router.Run(address)
 }
