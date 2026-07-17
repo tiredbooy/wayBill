@@ -26,11 +26,20 @@ func NewWaybillService(waybillRepo repositories.WaybillRepository, driverRepo re
 
 func (s *WaybillService) CreateWaybill(ctx context.Context, req models.CreateWaybillReq) error {
 
-	if req.WaybillNumber == nil || *req.WaybillNumber == "" {
+	if req.WaybillNumber == nil {
 		waybillNum, err := uuid.NewRandom()
 		if err != nil {
-			log.Println("Failed to generate uuid for waybill")
+			return err
 		}
+
+		s := waybillNum.String()
+		req.WaybillNumber = &s
+	} else if *req.WaybillNumber == "" {
+		waybillNum, err := uuid.NewRandom()
+		if err != nil {
+			return err
+		}
+
 		*req.WaybillNumber = waybillNum.String()
 	}
 
