@@ -13,6 +13,13 @@ const numericString = (label: string) =>
       message: `${label} باید عددی معتبر و مثبت باشد`,
     });
 
+// Date pickers submit ISO timestamps. For validation, compare only their
+// calendar date so different times on the same day are always accepted.
+const calendarDay = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toISOString().slice(0, 10);
+};
+
 export const waybillSchema = z.object({
   waybill_number: z.string().optional(),
   issue_date: z.string().min(1, "تاریخ صدور الزامی است"),
@@ -35,13 +42,6 @@ export const waybillSchema = z.object({
   payment_status: z.string().optional(),
   notes: z.string().optional(),
 }).superRefine((data, ctx) => {
-  if (data.sender_id && data.sender_id === data.receiver_id) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["receiver_id"],
-      message: "فرستنده و گیرنده نمی‌توانند یکسان باشند",
-    });
-  }
   if (
     data.origin_location_id &&
     data.origin_location_id === data.destination_location_id
@@ -55,7 +55,7 @@ export const waybillSchema = z.object({
   if (
     data.issue_date &&
     data.dispatch_date &&
-    new Date(data.dispatch_date) < new Date(data.issue_date)
+    calendarDay(data.dispatch_date) < calendarDay(data.issue_date)
   ) {
     ctx.addIssue({
       code: "custom",
@@ -66,7 +66,7 @@ export const waybillSchema = z.object({
   if (
     data.dispatch_date &&
     data.actual_delivery_date &&
-    new Date(data.actual_delivery_date) < new Date(data.dispatch_date)
+    calendarDay(data.actual_delivery_date) < calendarDay(data.dispatch_date)
   ) {
     ctx.addIssue({
       code: "custom",

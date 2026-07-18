@@ -1,5 +1,6 @@
 import { useWaybill } from "@/_libs/services/queries/waybills.queries";
 import { Spinner } from "@/components/ui/spinner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ModalShell from "@/features/reusable/ModalShell";
 import { useWaybillActionStore } from "@/stores/useWaybillIdStore";
@@ -8,7 +9,7 @@ import { WaybillDetailView } from "./WaybillDetailView";
 
 export default function ViewWaybillModal() {
   const { waybillId, setWaybillId } = useWaybillActionStore();
-  const { data, isLoading } = useWaybill(waybillId!);
+  const { data, error, isError, isLoading } = useWaybill(waybillId!);
 
   const isOpen = !!waybillId;
 
@@ -25,6 +26,12 @@ export default function ViewWaybillModal() {
         <div className="flex justify-center py-12">
           <Spinner />
         </div>
+      ) : isError ? (
+        <Alert variant="destructive">
+          <AlertDescription>
+            {error.message || "دریافت اطلاعات بارنامه با خطا مواجه شد."}
+          </AlertDescription>
+        </Alert>
       ) : data ? (
         <Tabs dir="rtl" defaultValue="view" className="w-full">
           <TabsList className="grid w-full grid-cols-2">

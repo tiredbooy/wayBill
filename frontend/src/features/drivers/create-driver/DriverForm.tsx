@@ -205,7 +205,11 @@ export function DriverForm({ mode = "create", driver, shouldNavigate }: Props) {
           </div>
         </form>
       </Form>
-      <CreateVehicleModal open={vehicleOpen} shouldNavigate={false} />
+      <CreateVehicleModal
+        open={vehicleOpen}
+        onOpenChange={setVehicleOpen}
+        shouldNavigate={false}
+      />
     </>
   );
 }

@@ -239,6 +239,27 @@
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
+    /* WindowPrint prints the current Wails window. Keep only the mounted
+       waybill visible so dashboard controls are never included. */
+    body:has(#wails-waybill-print) * {
+      visibility: hidden !important;
+    }
+    #wails-waybill-print,
+    #wails-waybill-print * {
+      visibility: visible !important;
+    }
+    #wails-waybill-print {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100% !important;
+      max-width: none !important;
+    }
+    #wails-waybill-print .waybill-print {
+      width: 194mm !important;
+      max-width: 194mm !important;
+      margin: 0 auto !important;
+      padding: 0 !important;
+    }
     [data-print-hidden] {
       display: none !important;
     }

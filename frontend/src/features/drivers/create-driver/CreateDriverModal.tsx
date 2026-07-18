@@ -1,18 +1,21 @@
 import ModalShell from "@/features/reusable/ModalShell";
 import CreateOrEditDriverSection from "./CreateOrEditDriverSection";
-import type { Dispatch, SetStateAction } from "react";
 
 interface Props {
   open: boolean;
-  onOpenChange: Dispatch<SetStateAction<boolean>>;
+  onOpenChange: (open: boolean) => void;
   shouldNavigate?: boolean;
 }
 
-export default function CreateDriverModal({ open, shouldNavigate }: Props) {
+export default function CreateDriverModal({
+  open,
+  onOpenChange,
+  shouldNavigate,
+}: Props) {
   return (
     <ModalShell
       open={open}
-      onOpenChange={(open) => !open}
+      onOpenChange={onOpenChange}
       title={"ساخت راننده"}
     >
       <CreateOrEditDriverSection

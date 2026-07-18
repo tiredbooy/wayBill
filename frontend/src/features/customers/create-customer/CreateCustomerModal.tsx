@@ -1,16 +1,19 @@
 import ModalShell from "@/features/reusable/ModalShell";
-import type { Dispatch, SetStateAction } from "react";
 import CreateOrEditCustomerSection from "./CreateOrEditCustomerSection";
 
 interface Props {
   open: boolean;
-  onOpenChange: Dispatch<SetStateAction<boolean>>;
+  onOpenChange: (open: boolean) => void;
   shouldNavigate?: boolean;
 }
 
-export default function CreateCustomerModal({ open, shouldNavigate }: Props) {
+export default function CreateCustomerModal({
+  open,
+  onOpenChange,
+  shouldNavigate,
+}: Props) {
   return (
-    <ModalShell open={open} onOpenChange={(open) => !open} title={"ساخت مشتری"}>
+    <ModalShell open={open} onOpenChange={onOpenChange} title="ساخت مشتری">
       <CreateOrEditCustomerSection
         mode="create"
         shouldNavigate={shouldNavigate}
