@@ -202,10 +202,6 @@ export function WindowIsNormal(): Promise<boolean>;
 // Sets the background colour of the window to the given RGBA colour definition. This colour will show through for all transparent pixels.
 export function WindowSetBackgroundColour(R: number, G: number, B: number, A: number): void;
 
-// [WindowPrint](https://wails.io/docs/v2.12.0/reference/runtime/window#windowprint)
-// Opens the native print dialog for the current window.
-export function WindowPrint(): void;
-
 // [ScreenGetAll](https://wails.io/docs/reference/runtime/window#screengetall)
 // Gets the all screens. Call this anew each time you want to refresh data from the underlying windowing system.
 export function ScreenGetAll(): Promise<Screen[]>;

@@ -165,10 +165,6 @@ export function WindowSetBackgroundColour(R, G, B, A) {
     window.runtime.WindowSetBackgroundColour(R, G, B, A);
 }
 
-export function WindowPrint() {
-    window.runtime.WindowPrint();
-}
-
 export function ScreenGetAll() {
     return window.runtime.ScreenGetAll();
 }

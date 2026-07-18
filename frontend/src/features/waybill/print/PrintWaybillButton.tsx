@@ -4,7 +4,6 @@ import { WaybillPrintContent } from "./WaybillPrintContent";
 import { useSetting } from "@/_libs/services/queries/setting.queries";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-import { WindowPrint } from "../../../../wailsjs/runtime/runtime";
 
 interface Props {
   waybillId: number;
@@ -47,7 +46,9 @@ export function PrintWaybillButton({ waybillId, onClose }: Props) {
 
       try {
         await document.fonts?.ready;
-        WindowPrint();
+        // WindowPrint exists in the native Wails bridge but is not included in
+        // the generated TypeScript runtime file, which Wails recreates on build.
+        wailsRuntime.WindowPrint();
       } catch (error) {
         window.removeEventListener("afterprint", closeAfterPrint);
         console.error("Print error:", error);
