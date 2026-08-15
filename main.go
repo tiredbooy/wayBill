@@ -52,6 +52,7 @@ func main() {
 			go runServer(serverErrors)
 			// startTray(ctx)      // <-- add this line
 		},
+		OnDomReady: app.onDomReady,
 		Bind: []interface{}{
 			app,
 		},
@@ -59,6 +60,11 @@ func main() {
 
 	if err != nil {
 		log.Printf("desktop runtime failed: %v", err)
+		message := fmt.Sprintf("Waybill could not start.\n\n%v", err)
+		if logPath != "" {
+			message += "\n\nLog file: " + logPath
+		}
+		showFatalStartupError(message)
 	}
 }
 

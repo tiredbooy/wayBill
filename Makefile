@@ -35,6 +35,8 @@ USE_UPX := $(shell command -v upx 2>/dev/null && echo 1 || echo 0)
 
 INNO_IMAGE      := waybill-innosetup
 INNO_DOCKERFILE := docker/Dockerfile.innosetup
+WAILS_MODULE_DIR := $(shell go list -m -f '{{.Dir}}' github.com/wailsapp/wails/v2 2>/dev/null)
+WEBVIEW2_BOOTSTRAPPER := build/windows/installer/tmp/MicrosoftEdgeWebview2Setup.exe
 
 # ──────────────────────────────────────────────
 # Help
@@ -300,8 +302,13 @@ info: ## Show project info and tool versions
 installer-image: ## Build the Inno Setup Docker image
 	@docker image inspect $(INNO_IMAGE) >/dev/null 2>&1 || docker build -t $(INNO_IMAGE) -f $(INNO_DOCKERFILE) .
 
+$(WEBVIEW2_BOOTSTRAPPER): go.mod
+	@test -n "$(WAILS_MODULE_DIR)" || { echo "  [MISSING] Wails module directory"; exit 1; }
+	@mkdir -p "$(dir $(WEBVIEW2_BOOTSTRAPPER))"
+	cp "$(WAILS_MODULE_DIR)/internal/webview2runtime/MicrosoftEdgeWebview2Setup.exe" "$@"
+
 .PHONY: dist-windows-installer
-dist-windows-installer: build-windows installer-image
+dist-windows-installer: build-windows installer-image $(WEBVIEW2_BOOTSTRAPPER)
 	@echo "--- Running Inno Setup compiler in Docker ---"
 	mkdir -p release
 	docker run --rm -v "$(CURDIR):/work" $(INNO_IMAGE) \

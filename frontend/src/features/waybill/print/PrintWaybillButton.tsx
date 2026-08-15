@@ -4,6 +4,7 @@ import { WaybillPrintContent } from "./WaybillPrintContent";
 import { useSetting } from "@/_libs/services/queries/setting.queries";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { Print } from "../../../../wailsjs/go/main/App";
 
 interface Props {
   waybillId: number;
@@ -27,28 +28,15 @@ export function PrintWaybillButton({ waybillId, onClose }: Props) {
       return;
     }
 
+    const closeAfterPrint = () => onClose?.();
     const frame = requestAnimationFrame(async () => {
       printStartedRef.current = true;
 
-      // Wails prints through the WebView runtime. react-to-print instead uses an
-      // iframe and window.print(), which is unreliable in a desktop webview.
-      const wailsRuntime = (
-        window as Window & { runtime?: { WindowPrint?: () => void } }
-      ).runtime;
-      if (!wailsRuntime?.WindowPrint) {
-        toast.error("چاپ فقط در نسخه دسکتاپ برنامه در دسترس است");
-        onClose?.();
-        return;
-      }
-
-      const closeAfterPrint = () => onClose?.();
       window.addEventListener("afterprint", closeAfterPrint, { once: true });
 
       try {
         await document.fonts?.ready;
-        // WindowPrint exists in the native Wails bridge but is not included in
-        // the generated TypeScript runtime file, which Wails recreates on build.
-        wailsRuntime.WindowPrint();
+        await Print();
       } catch (error) {
         window.removeEventListener("afterprint", closeAfterPrint);
         console.error("Print error:", error);
@@ -56,7 +44,10 @@ export function PrintWaybillButton({ waybillId, onClose }: Props) {
         onClose?.();
       }
     });
-    return () => cancelAnimationFrame(frame);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("afterprint", closeAfterPrint);
+    };
   }, [waybill, isLoadingWaybill, isLoadingSetting, onClose]);
 
   return (
